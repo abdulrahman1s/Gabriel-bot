@@ -39,6 +39,7 @@ const WHITE_LIST = [
     '235148962103951360', // Carl
     '282859044593598464', // ProBot
     '831661630424743946', // Discord Bot (my bot)
+    '557628352828014614', // Ticket Tool
 ]
 const TIMEOUT = ms('3 minutes')
 const LIMITS = <{ [key in GuildAuditLogsActionType]: number }>{
