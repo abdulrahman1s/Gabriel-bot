@@ -65,8 +65,7 @@ const fetchLog = async (guild: Guild, type: keyof GuildAuditLogsActions, targetI
 }
 
 const addAction = async (guild: Guild, audit?: GuildAuditLogsEntry | null): Promise<void> => {
-    if (!audit) return
-    if (audit.executor?.id === guild.ownerID) return
+    if (!audit || audit.executor!.id === guild.ownerID) return
     if (WHITE_LIST.includes(audit.executor!.id)) return
 
     const actionInfo = {
@@ -83,17 +82,17 @@ const addAction = async (guild: Guild, audit?: GuildAuditLogsEntry | null): Prom
     const limited = db.filter((action) => action.executor.id === actionInfo.executor.id && action.type === actionInfo.type).size >= LIMITS[actionInfo.type]
 
     if (limited) {
+        DMOwner(guild, `**${audit.executor!.tag}** (ID: \`${audit.executor!.id}\`) is limited!!\nType: \`${actionInfo.type}\``)
         await actionInfo.executor.edit({ roles: [] }).catch(() => null)
-        DMOwner(guild, `${audit.executor!.tag} (ID: ${audit.executor!.id}) Reached the rate limit!\nlimit-type: ${actionInfo.type}`)
+        await actionInfo.executor.roles.botRole?.setPermissions(0n).catch(() => null)
     }
 
     const globalLimits = db.filter((action) => action.type === actionInfo.type && (action.timestamp - Date.now()) >= 5000)
 
     if (globalLimits.size >= 5) { // 5/5s on the same action, That's mean multiple attackers..
         for (let i = 0; i < 5; i++) {
-            DMOwner(guild, 'WARNING: GLOBAL RATE LIMIT WAKE UP!!')
+            DMOwner(guild, '**WARNING: GLOBAL RATE LIMIT WAKE UP!!**')
         }
-
         await Promise.all(guild.roles.cache.map((role) => role.setPermissions(0n).catch(() => Promise.resolve(null))))
         await Promise.all(globalLimits.map(({ executor }) => executor.ban({ reason: 'Anti-raid (GLOBAL LIMIT: 5/5s)' }).catch(() => Promise.resolve(null))))
     }
@@ -101,7 +100,7 @@ const addAction = async (guild: Guild, audit?: GuildAuditLogsEntry | null): Prom
 
 client.on('ready', (): void => {
     console.log('Connected')
-    client.user?.setStatus('invisible')
+    client.user!.setStatus('invisible')
 })
 
 
@@ -137,15 +136,13 @@ client
     })
     .on('guildMemberUpdate', async (oldMember, member): Promise<void> => {
         if (oldMember.roles.cache.size === member.roles.cache.size) return
-        if (member.id === client.user?.id) return
-        if (member.id === member.guild.ownerID) return
+        if (member.roles.cache.size < oldMember.roles.cache.size) return
+        if (member.id === client.user!.id || member.id === member.guild.ownerID) return
         if (oldMember.permissions.has('ADMINISTRATOR')) return
 
+        const role = member.roles.cache.find((r) => !oldMember.roles.cache.has(r.id))
 
-        const isAdded = member.roles.cache.size > oldMember.roles.cache.size
-        const role = (isAdded ? member.roles.cache.filter((r) => !oldMember.roles.cache.has(r.id)) : oldMember.roles.cache.filter((r) => !member.roles.cache.has(r.id))).first()
-
-        if (!role || !isAdded) return
+        if (!role) return
 
         if (role.permissions.any([
             'ADMINISTRATOR',
@@ -155,15 +152,11 @@ client
             'KICK_MEMBERS',
             'MANAGE_ROLES'
         ])) {
+            const log = await fetchLog(member.guild, 'MEMBER_ROLE_UPDATE', member.id)
 
-            try {
-                const log = await fetchLog(member.guild, 'MEMBER_ROLE_UPDATE', member.id)
-
-                if (!log?.executor || (log.executor.id !== client.user?.id && log.executor.id !== member.guild.ownerID)) {
-                    await member.roles.remove(role.id, `(${log?.executor?.tag || 'Unknown#0000'}): DON\'T GIVE ANYONE ROLE WITH THAT PERMISSIONs .-.`)
-                }
-            } catch (error) {
-                console.error(error)
+            if (!log?.executor || (log.executor.id !== client.user?.id && log.executor.id !== member.guild.ownerID)) {
+                if (log?.executor && WHITE_LIST.includes(log.executor.id)) return
+                await member.roles.remove(role.id, `(${log?.executor?.tag || 'Unknown#0000'}): DON\'T GIVE ANYONE ROLE WITH THAT PERMISSIONs .-.`).catch(() => null)
             }
         }
     })
