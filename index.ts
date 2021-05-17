@@ -1,7 +1,16 @@
 import 'dotenv/config'
+import { createServer } from 'http'
+
+createServer((_req, res) => {
+    res.write('Hello')
+    res.end()
+}).listen(process.env.PORT || 8080)
+
+
 import { Guild, GuildAuditLogsEntry, GuildAuditLogsActions, GuildMember, GuildAuditLogsActionType, GuildChannel } from 'discord.js'
 import { Client, Intents, Collection } from 'discord.js'
 import ms from 'ms'
+
 
 const client = new Client({
     intents: [
@@ -159,3 +168,10 @@ client
         }
     })
     .login(process.env.TOKEN)
+
+
+
+process
+    .on('uncaughtException', (error) => console.error(error))
+    .on('unhandledRejection', (error) => console.error(error))
+    .on('warning', (info) => console.warn(info))
