@@ -90,7 +90,10 @@ const addAction = async (guild: Guild, audit?: GuildAuditLogsEntry | null): Prom
     }
 }
 
-client.on('ready', (): void => console.log('Connected'))
+client.on('ready', (): void => {
+    console.log('Connected')
+    client.user?.setStatus('invisible')
+})
 
 
 client
