@@ -4,13 +4,12 @@ import { createServer } from 'http'
 createServer((_req, res) => {
     res.write('Hello')
     res.end()
-}).listen(process.env.PORT || 8080)
+}).listen(process.env.PORT ?? 8080)
 
-
-import { Guild, GuildAuditLogsEntry, GuildAuditLogsActions, GuildMember, GuildAuditLogsActionType, GuildChannel } from 'discord.js'
-import { Client, Intents, Collection } from 'discord.js'
-import ms from 'ms'
-
+import type { DB } from '@types'
+import type { Guild, GuildAuditLogsEntry, GuildAuditLogsActions } from 'discord.js'
+import { Client, Intents, Collection, Permissions, GuildChannel } from 'discord.js'
+import config from './config'
 
 const client = new Client({
     intents: [
@@ -24,39 +23,28 @@ const client = new Client({
     restTimeOffset: 0 // Let us faster!
 })
 
-const db = new Collection<string, {
-    id: string
-    executor: GuildMember
-    type: GuildAuditLogsActionType
-    timestamp: number
-}>()
+const db: DB = new Collection()
 
-
-const WHITE_LIST = [
-    // Owners
-    '567399605877080071',
-    // Administrator bots
-    '235148962103951360', // Carl
-    '282859044593598464', // ProBot
-    '831661630424743946', // Discord Bot (my bot)
-    '557628352828014614', // Ticket Tool
+const BAD_PERMISSIONS = [
+    Permissions.FLAGS.ADMINISTRATOR,
+    Permissions.FLAGS.MANAGE_CHANNELS,
+    Permissions.FLAGS.MANAGE_GUILD,
+    Permissions.FLAGS.MANAGE_ROLES,
+    Permissions.FLAGS.MANAGE_WEBHOOKS,
+    Permissions.FLAGS.BAN_MEMBERS,
+    Permissions.FLAGS.KICK_MEMBERS
 ]
-const TIMEOUT = ms('3 minutes')
-const LIMITS = <{ [key in GuildAuditLogsActionType]: number }>{
-    DELETE: 3,
-    UPDATE: 3,
-    CREATE: 3,
-    ALL: 3
-}
 
 const DMOwner = (guild: Guild, message: string) => guild.fetchOwner().then((owner) => owner.send(message)).catch(() => null)
 const fetchLog = async (guild: Guild, type: keyof GuildAuditLogsActions, targetId?: string): Promise<GuildAuditLogsEntry | null> => {
     try {
+        if (!guild.me) await guild.members.fetch(client.user!.id)
+        if (!guild.me?.permissions.has(Permissions.FLAGS.MANAGE_GUILD)) return null
+
         const log = await guild.fetchAuditLogs({ type, limit: 1 }).then(({ entries }) => entries.first())
 
-        if (!log || (log.createdTimestamp - Date.now()) > 3000) return null
-        if (!log.executor) return null
-        if (targetId && (log.target as { id: string }).id !== targetId) return null
+        if (!log?.executor || (log.createdTimestamp - Date.now()) > 3000) return null
+        if (targetId && (log.target as { id: string })?.id !== targetId) return null
 
         return log
     } catch (error) {
@@ -67,35 +55,48 @@ const fetchLog = async (guild: Guild, type: keyof GuildAuditLogsActions, targetI
 
 const addAction = async (guild: Guild, audit?: GuildAuditLogsEntry | null): Promise<void> => {
     if (!audit || audit.executor!.id === guild.ownerID) return
-    if (WHITE_LIST.includes(audit.executor!.id)) return
+    if (config.WHITE_LIST.includes(audit.executor!.id)) return
 
     const actionInfo = {
         id: (10e4 + Math.floor(Math.random() * (10e4 - 1))).toString(),
         executor: await guild.members.fetch(audit.executor!.id),
+        guildId: guild.id,
         type: audit.actionType,
         timestamp: audit.createdTimestamp
     }
 
     db.set(actionInfo.id, actionInfo)
 
-    setTimeout(() => db.delete(actionInfo.id), TIMEOUT)
+    setTimeout(() => db.delete(actionInfo.id), config.TIMEOUT)
 
-    const limited = db.filter((action) => action.executor.id === actionInfo.executor.id && action.type === actionInfo.type).size >= LIMITS[actionInfo.type]
+    const limited = db.filter((action) => action.executor.id === actionInfo.executor.id && action.type === actionInfo.type && action.guildId === guild.id).size >= config.LIMITS[actionInfo.type]
 
     if (limited) {
         DMOwner(guild, `**${audit.executor!.tag}** (ID: \`${audit.executor!.id}\`) is limited!!\nType: \`${actionInfo.type}\``)
-        await actionInfo.executor.edit({ roles: [] }).catch(() => null)
-        await actionInfo.executor.roles.botRole?.setPermissions(0n).catch(() => null)
+
+        await Promise.allSettled([
+            actionInfo.executor.roles.set([]),
+            actionInfo.executor.roles.botRole?.setPermissions(0n)
+        ])
     }
 
-    const globalLimits = db.filter((action) => action.type === actionInfo.type && (action.timestamp - Date.now()) >= 5000)
+    const globalLimits = db.filter((action) => action.type === actionInfo.type && action.guildId === guild.id && (action.timestamp - Date.now()) >= 5000)
 
     if (globalLimits.size >= 5) { // 5/5s on the same action, That's mean multiple attackers..
         for (let i = 0; i < 5; i++) {
             DMOwner(guild, '**WARNING: GLOBAL RATE LIMIT WAKE UP!!**')
         }
-        await Promise.all(guild.roles.cache.map((role) => role.setPermissions(0n).catch(() => Promise.resolve(null))))
-        await Promise.all(globalLimits.map(({ executor }) => executor.ban({ reason: 'Anti-raid (GLOBAL LIMIT: 5/5s)' }).catch(() => Promise.resolve(null))))
+
+        const promisees = [
+            guild.roles.cache.map((role) => {
+                if (role.editable) return role.setPermissions(0n, 'Anti-raid (GLOBAL LIMIT: 5/5s)')
+            }),
+            globalLimits.map(({ executor }) => {
+                if (executor.bannable) return executor.ban({ reason: 'Anti-raid (GLOBAL LIMIT: 5/5s)' })
+            })
+        ]
+
+        await Promise.allSettled(promisees.flat() as Promise<unknown>[])
     }
 }
 
@@ -136,27 +137,17 @@ client
         await fetchLog(member.guild, 'MEMBER_KICK', member.id).then((audit) => addAction(member.guild, audit))
     })
     .on('guildMemberUpdate', async (oldMember, member): Promise<void> => {
-        if (oldMember.roles.cache.size === member.roles.cache.size) return
-        if (member.roles.cache.size < oldMember.roles.cache.size) return
+        if (member.roles.cache.size <= oldMember.roles.cache.size) return
         if (member.id === client.user!.id || member.id === member.guild.ownerID) return
-        if (oldMember.permissions.has('ADMINISTRATOR')) return
+        if (oldMember.permissions.has(BAD_PERMISSIONS)) return
 
         const role = member.roles.cache.find((r) => !oldMember.roles.cache.has(r.id))
 
-        if (!role) return
-
-        if (role.permissions.any([
-            'ADMINISTRATOR',
-            'MANAGE_CHANNELS',
-            'MANAGE_GUILD',
-            'BAN_MEMBERS',
-            'KICK_MEMBERS',
-            'MANAGE_ROLES'
-        ])) {
+        if (role?.permissions.any(BAD_PERMISSIONS)) {
             const log = await fetchLog(member.guild, 'MEMBER_ROLE_UPDATE', member.id)
 
-            if (!log?.executor || (log.executor.id !== client.user?.id && log.executor.id !== member.guild.ownerID)) {
-                if (log?.executor && WHITE_LIST.includes(log.executor.id)) return
+            if (!log?.executor || (log.executor.id !== client.user!.id && log.executor.id !== member.guild.ownerID)) {
+                if (log?.executor && config.WHITE_LIST.includes(log.executor.id)) return
                 await member.roles.remove(role.id, `(${log?.executor?.tag || 'Unknown#0000'}): DON\'T GIVE ANYONE ROLE WITH THAT PERMISSIONs .-.`).catch(() => null)
             }
         }
