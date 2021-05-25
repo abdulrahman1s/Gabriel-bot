@@ -1,4 +1,4 @@
-import type { Collection, GuildAuditLogsActionType, GuildMember, Snowflake } from 'discord.js'
+import type { Collection, GuildAuditLogsActionType, Snowflake } from 'discord.js'
 
 export interface IConfig {
     TIMEOUT: number
@@ -8,7 +8,7 @@ export interface IConfig {
 
 export type DB = Collection<string, {
     id: string
-    executor: GuildMember
+    executorId: Snowflake
     guildId: string
     type: GuildAuditLogsActionType
     timestamp: number
