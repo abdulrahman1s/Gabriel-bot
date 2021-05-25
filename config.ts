@@ -17,5 +17,7 @@ export default <IConfig>{
         '282859044593598464', // ProBot
         '831661630424743946', // Discord Bot (my bot)
         '557628352828014614', // Ticket Tool
+        '240254129333731328', // Vortex
+        '841928041051848724', // Code Station
     ]
 }
