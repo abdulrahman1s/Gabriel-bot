@@ -20,7 +20,8 @@ const client = new Client({
         Intents.FLAGS.GUILD_PRESENCES
     ],
     partials: ['GUILD_MEMBER'], // I don't really know what is this xD
-    restTimeOffset: 0 // Let us faster!
+    restTimeOffset: 0, // Let us faster!
+    presence: { status: 'invisible' }
 })
 
 const db: DB = new Collection()
@@ -102,7 +103,6 @@ const addAction = async (guild: Guild, audit?: GuildAuditLogsEntry | null): Prom
 
 client.on('ready', (): void => {
     console.log('Connected')
-    client.user!.setStatus('invisible')
 })
 
 
