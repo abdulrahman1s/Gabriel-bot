@@ -43,7 +43,7 @@ const fetchLog = async (guild: Guild, type: keyof GuildAuditLogsActions, targetI
 
         const log = await guild.fetchAuditLogs({ type, limit: 1 }).then(({ entries }) => entries.first())
 
-        if (!log?.executor || (log.createdTimestamp - Date.now()) > 3000) return null
+        if (!log?.executor || (Date.now() - log.createdTimestamp) >= 3000) return null
         if (targetId && (log.target as { id: string })?.id !== targetId) return null
 
         return log
@@ -75,19 +75,19 @@ const addAction = async (guild: Guild, audit?: GuildAuditLogsEntry | null): Prom
         DMOwner(guild, `**${audit.executor!.tag}** (ID: \`${audit.executor!.id}\`) is limited!!\nType: \`${actionInfo.type}\``)
 
         await Promise.allSettled([
-            actionInfo.executor.roles.set([]),
-            actionInfo.executor.roles.botRole?.setPermissions(0n)
+            actionInfo.executor.roles.set([], 'Anti-raid'),
+            actionInfo.executor.roles.botRole?.setPermissions(0n, 'Anti-raid')
         ])
     }
 
-    const globalLimits = db.filter((action) => action.type === actionInfo.type && action.guildId === guild.id && (action.timestamp - Date.now()) >= 5000)
+    const globalLimits = db.filter((action) => action.type === actionInfo.type && action.guildId === guild.id && (Date.now() - action.timestamp) <= 15000)
 
-    if (globalLimits.size >= 5) { // 5/5s on the same action, That's mean multiple attackers..
+    if (globalLimits.size >= 5) { // 5/15s on the same action, That's mean multiple attackers..
         for (let i = 0; i < 5; i++) {
             DMOwner(guild, '**WARNING: GLOBAL RATE LIMIT WAKE UP!!**')
         }
 
-        const promisees = [
+        const promises = [
             guild.roles.cache.map((role) => {
                 if (role.editable) return role.setPermissions(0n, 'Anti-raid (GLOBAL LIMIT: 5/5s)')
             }),
@@ -96,7 +96,7 @@ const addAction = async (guild: Guild, audit?: GuildAuditLogsEntry | null): Prom
             })
         ]
 
-        await Promise.allSettled(promisees.flat() as Promise<unknown>[])
+        await Promise.allSettled(promises.flat() as Promise<unknown>[])
     }
 }
 
