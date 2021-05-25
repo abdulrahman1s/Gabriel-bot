@@ -17,7 +17,7 @@ const client = new Client({
         Intents.FLAGS.GUILD_MESSAGES,
         Intents.FLAGS.GUILD_MEMBERS,
         Intents.FLAGS.GUILD_BANS,
-        Intents.FLAGS.GUILD_PRESENCES
+        Intents.FLAGS.GUILD_WEBHOOKS
     ],
     partials: ['GUILD_MEMBER'], // I don't really know what is this xD
     restTimeOffset: 0, // Let us faster!
@@ -30,6 +30,8 @@ const BAD_PERMISSIONS = [
     Permissions.FLAGS.ADMINISTRATOR,
     Permissions.FLAGS.MANAGE_CHANNELS,
     Permissions.FLAGS.MANAGE_GUILD,
+    Permissions.FLAGS.MANAGE_MESSAGES,
+    Permissions.FLAGS.MANAGE_NICKNAMES,
     Permissions.FLAGS.MANAGE_ROLES,
     Permissions.FLAGS.MANAGE_WEBHOOKS,
     Permissions.FLAGS.BAN_MEMBERS,
@@ -45,7 +47,8 @@ const fetchLog = async (guild: Guild, type: keyof GuildAuditLogsActions, targetI
         const log = await guild.fetchAuditLogs({ type, limit: 1 }).then(({ entries }) => entries.first())
 
         if (!log?.executor || (Date.now() - log.createdTimestamp) >= 3000) return null
-        if (targetId && (log.target as { id: string })?.id !== targetId) return null
+
+        if (targetId && (log.target as { id?: string })?.id !== targetId) return null
 
         return log
     } catch (error) {
@@ -59,8 +62,8 @@ const addAction = async (guild: Guild, audit?: GuildAuditLogsEntry | null): Prom
     if (config.WHITE_LIST.includes(audit.executor!.id)) return
 
     const actionInfo = {
-        id: (10e4 + Math.floor(Math.random() * (10e4 - 1))).toString(),
-        executor: await guild.members.fetch(audit.executor!.id),
+        id: audit.id,
+        executorId: audit.executor!.id,
         guildId: guild.id,
         type: audit.actionType,
         timestamp: audit.createdTimestamp
@@ -70,20 +73,20 @@ const addAction = async (guild: Guild, audit?: GuildAuditLogsEntry | null): Prom
 
     setTimeout(() => db.delete(actionInfo.id), config.TIMEOUT)
 
-    const limited = db.filter((action) => action.executor.id === actionInfo.executor.id && action.type === actionInfo.type && action.guildId === guild.id).size >= config.LIMITS[actionInfo.type]
+    const limited = db.filter((action) => action.executorId === actionInfo.executorId && action.type === actionInfo.type && action.guildId === guild.id).size >= config.LIMITS[actionInfo.type]
 
     if (limited) {
         DMOwner(guild, `**${audit.executor!.tag}** (ID: \`${audit.executor!.id}\`) is limited!!\nType: \`${actionInfo.type}\``)
 
         await Promise.allSettled([
-            actionInfo.executor.roles.set([], 'Anti-raid'),
-            actionInfo.executor.roles.botRole?.setPermissions(0n, 'Anti-raid')
+            guild.members.edit(actionInfo.executorId, { roles: [] }, 'Anti-raid'),
+            guild.roles.botRoleFor(actionInfo.executorId)?.setPermissions(0n, 'Anti-raid'),
         ])
     }
 
-    const globalLimits = db.filter((action) => action.type === actionInfo.type && action.guildId === guild.id && (Date.now() - action.timestamp) <= 15000)
+    const globalLimited = db.filter((action) => action.type === actionInfo.type && action.guildId === guild.id && (Date.now() - action.timestamp) <= 15000)
 
-    if (globalLimits.size >= 5) { // 5/15s on the same action, That's mean multiple attackers..
+    if (globalLimited.size >= 5) { // 5/15s on the same action, That's mean multiple attackers..
         for (let i = 0; i < 5; i++) {
             DMOwner(guild, '**WARNING: GLOBAL RATE LIMIT WAKE UP!!**')
         }
@@ -92,8 +95,8 @@ const addAction = async (guild: Guild, audit?: GuildAuditLogsEntry | null): Prom
             guild.roles.cache.map((role) => {
                 if (role.editable) return role.setPermissions(0n, 'Anti-raid (GLOBAL LIMIT: 5/5s)')
             }),
-            globalLimits.map(({ executor }) => {
-                if (executor.bannable) return executor.ban({ reason: 'Anti-raid (GLOBAL LIMIT: 5/5s)' })
+            globalLimited.map(({ executorId }) => {
+                return guild.bans.create(executorId, { reason: 'Anti-raid (GLOBAL LIMIT: 5/5s)' })
             })
         ]
 
