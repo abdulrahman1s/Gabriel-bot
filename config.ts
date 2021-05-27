@@ -19,5 +19,10 @@ export default <IConfig>{
         '557628352828014614', // Ticket Tool
         '240254129333731328', // Vortex
         '841928041051848724', // Code Station
+    ],
+    IGNORED_CHANNELS: [
+        '764473678686978048', // Audit-log
+        '800788335563505714', // Mod-log
+        '814453330486100008', // Invites-log
     ]
 }
