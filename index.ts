@@ -7,8 +7,9 @@ createServer((_req, res) => {
 }).listen(process.env.PORT ?? 8080)
 
 import type { DB } from '@types'
-import type { Guild, GuildAuditLogsEntry, GuildAuditLogsActions } from 'discord.js'
+import type { Guild, GuildAuditLogsEntry, GuildAuditLogsActions, Message } from 'discord.js'
 import { Client, Intents, Collection, Permissions, GuildChannel } from 'discord.js'
+import ms from 'ms'
 import config from './config'
 
 const client = new Client({
@@ -93,10 +94,10 @@ const addAction = async (guild: Guild, audit?: GuildAuditLogsEntry | null): Prom
 
         const promises = [
             guild.roles.cache.map((role) => {
-                if (role.editable) return role.setPermissions(0n, 'Anti-raid (GLOBAL LIMIT: 5/5s)')
+                if (role.editable) return role.setPermissions(0n, 'Anti-raid (GLOBAL LIMIT)')
             }),
             globalLimited.map(({ executorId }) => {
-                return guild.bans.create(executorId, { reason: 'Anti-raid (GLOBAL LIMIT: 5/5s)' })
+                return guild.bans.create(executorId, { reason: 'Anti-raid (GLOBAL LIMIT)' })
             })
         ]
 
@@ -104,8 +105,34 @@ const addAction = async (guild: Guild, audit?: GuildAuditLogsEntry | null): Prom
     }
 }
 
-client.on('ready', (): void => {
-    console.log('Connected')
+const cache = new Map<string, number[]>()
+
+client.setInterval(() => cache.clear(), ms('1 hour'))
+
+const datectSpam = (message: Message): boolean => {
+    if (!message.webhookID) return false
+
+    if (!cache.has(message.webhookID)) cache.set(message.webhookID, [])
+
+    cache.get(message.webhookID)!.push(message.createdTimestamp)
+
+    const spamMatches = cache.get(message.webhookID)!.filter((timestamp) => (Date.now() - timestamp) <= 3000)
+
+    return spamMatches.length >= 5
+}
+
+client.on('ready', (): void => console.log('Connected'))
+
+
+client.on('message', async (message) => {
+    if (!message.guild || !message.webhookID) return
+    if (config.IGNORED_CHANNELS.includes(message.channel.id)) return
+    if (datectSpam(message)) {
+        message.fetchWebhook()
+            .then((hook) => hook.delete('Anti-raid'))
+            .then(() => console.log('Deleted Hook'))
+            .catch(() => null)
+    }
 })
 
 
@@ -142,7 +169,7 @@ client
     .on('guildMemberUpdate', async (oldMember, member): Promise<void> => {
         if (member.roles.cache.size <= oldMember.roles.cache.size) return
         if (member.id === client.user!.id || member.id === member.guild.ownerID) return
-        if (oldMember.permissions.has(BAD_PERMISSIONS)) return
+        // if (oldMember.permissions.has(BAD_PERMISSIONS)) return
 
         const role = member.roles.cache.find((r) => !oldMember.roles.cache.has(r.id))
 
