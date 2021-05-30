@@ -3,6 +3,7 @@ import type { Collection, GuildAuditLogsActionType, Snowflake, PermissionResolva
 declare module 'discord.js' {
 
     interface Guild {
+        running: Set<string>
         owner: GuildMember | null
         isIgnored(id: Snowflake): boolean
         resolveAction(audit?: GuildAuditLogsEntry | null): Promise<void>
@@ -12,10 +13,15 @@ declare module 'discord.js' {
     interface Role {
         isEveryone: boolean
     }
+
+    interface GuildMember {
+        dm(message: string): Promise<boolean>
+    }
 }
 
 export interface IConfig {
     TIMEOUT: number
+    CHECK_MESSAGE: string
     LIMITS: { [key in GuildAuditLogsActionType]: number }
     WHITE_LIST: Snowflake[]
     IGNORED_CHANNELS: Snowflake[]

@@ -10,6 +10,7 @@ createServer((_req, res) => {
 }).listen(process.env.PORT ?? 8080)
 
 // load extensions.
+import './extensions/GuildMember'
 import './extensions/Guild'
 import './extensions/Role'
 
@@ -34,6 +35,7 @@ const client = new Client({
 
 client.on('ready', async (): Promise<void> => {
     console.log('Connected')
+    console.log(client.user!.tag)
 
     for (const [eventName, event] of Object.entries(CustomEvents)) {
         client.on(eventName, (...args) => (event as unknown as (...args: unknown[]) => void)(...args, client))
@@ -83,7 +85,7 @@ client
     .on('guildMemberRemove', async (member): Promise<void> => {
         await member.guild.resolveAction(await member.guild.fetchAudit('MEMBER_KICK', member.id))
     })
-    .login(process.env.TOKEN)
+    .login(process.env.TEST_TOKEN || process.env.TOKEN)
 
 
 
