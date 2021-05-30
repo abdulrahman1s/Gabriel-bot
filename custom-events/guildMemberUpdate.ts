@@ -12,10 +12,10 @@ export const guildMemberUpdate = async (oldMember: GuildMember, member: GuildMem
 		if (role.permissions.any(config.BAD_PERMISSIONS)) {
 			if (log?.executor) {
 				if (!role.guild.isIgnored(log.executor.id)) {
-					await member.roles.remove(role.id, `(${log.executor.tag}): DON\'T GIVE ANYONE ROLE WITH THAT PERMISSIONs .-.`).catch(() => null)
+					await member.roles.remove(role.id, `(${log.executor.tag}): DON\'T GIVE ANYONE ROLE WITH THAT PERMISSIONs .-.`)
 				}
 			} else {
-				await member.roles.remove(role.id, `(Unknown#0000): DON\'T GIVE ANYONE ROLE WITH THAT PERMISSIONs .-.`).catch(() => null)
+				await member.roles.remove(role.id, `(Unknown#0000): DON\'T GIVE ANYONE ROLE WITH THAT PERMISSIONs .-.`)
 			}
 		}
 	}

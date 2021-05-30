@@ -4,6 +4,7 @@ import ms from 'ms'
 
 export default <IConfig>{
     TIMEOUT: ms('3 minutes'),
+    CHECK_MESSAGE: '\\._.',
     LIMITS: {
         DELETE: 3,
         UPDATE: 5,
