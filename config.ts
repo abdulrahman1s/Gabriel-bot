@@ -1,4 +1,5 @@
 import type { IConfig } from '@types'
+import { Permissions } from 'discord.js'
 import ms from 'ms'
 
 export default <IConfig>{
@@ -24,5 +25,16 @@ export default <IConfig>{
         '764473678686978048', // Audit-log
         '800788335563505714', // Mod-log
         '814453330486100008', // Invites-log
+    ], 
+    BAD_PERMISSIONS: [
+        Permissions.FLAGS.ADMINISTRATOR,
+        Permissions.FLAGS.MANAGE_CHANNELS,
+        Permissions.FLAGS.MANAGE_GUILD,
+        Permissions.FLAGS.MANAGE_MESSAGES,
+        Permissions.FLAGS.MANAGE_NICKNAMES,
+        Permissions.FLAGS.MANAGE_ROLES,
+        Permissions.FLAGS.MANAGE_WEBHOOKS,
+        Permissions.FLAGS.BAN_MEMBERS,
+        Permissions.FLAGS.KICK_MEMBERS
     ]
 }
