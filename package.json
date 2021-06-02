@@ -11,7 +11,7 @@
     "build": "./node_modules/.bin/tsup --target node14 ./index.ts"
   },
   "dependencies": {
-    "discord.js": "github:discordjs/discord.js#01bb2ac97b6591f8d9d4512d556261d007e68a98",
+    "discord.js": "github:discordjs/discord.js#086c3f0799d65c64c4e60d6370246a37a27a1eab",
     "dotenv": "10.0.0",
     "ms": "^2.1.3"
   },

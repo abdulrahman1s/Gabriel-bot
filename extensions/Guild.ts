@@ -1,70 +1,111 @@
-import type { ActionCollection } from '@types'
-import type { GuildAuditLogsActions, GuildAuditLogsEntry, Snowflake } from 'discord.js'
+import type { Action, RawData } from '@types'
+import type { GuildAuditLogsActions, GuildAuditLogsEntry, Snowflake, Role, GuildBan, GuildChannel, Guild } from 'discord.js'
 import { Structures, Permissions, Collection } from 'discord.js'
+import { convertToRaw } from '../utils'
 import config from '../config'
 
+const USER_REASON = 'Anti-raid', GLOBAL_REASON = USER_REASON + ' (GLOBAL RATE LIMIT)'
+
+const rePast = (thing: RawData, guild: Guild) => {
+	if (thing.created) {
+		switch (thing.type) {
+			case 'BAN': return guild.bans.remove(thing.ban!.userId)
+			case 'CHANNEL': return Promise.resolve(guild.channels.cache.get(thing.channel!.id)?.delete())
+			case 'ROLE': return Promise.resolve(guild.roles.cache.get(thing.role!.id)?.delete())
+		}
+	} else if (thing.deleted) {
+		switch (thing.type) {
+			case 'BAN': return guild.bans.create(thing.ban!.userId)
+			case 'CHANNEL': return guild.channels.create(thing.channel!.name, thing.channel!)
+			case 'ROLE':
+				if (thing.role!.permissions === 0n) delete thing.role!.permissions 
+				return guild.roles.create(thing.role)
+		}
+	} else throw new Error('un-handled audit type')
+}
+
+
 Structures.extend('Guild', Base => class Guild extends Base {
-	protected actions: ActionCollection = new Collection()
+	private readonly actions = new Collection<string, Collection<string, Action>>()
 	readonly running = new Set<string>()
 
 	get owner() {
 		return this.members.cache.get(this.ownerID) ?? null
 	}
 
-	async resolveAction(audit?: GuildAuditLogsEntry | null): Promise<void> {
-		if (!audit?.executor || this.isIgnored(audit.executor.id)) return
+	isCIA(id: Snowflake): boolean {
+		return id === this.ownerID || id === this.client.user!.id
+	}
 
-		const db = this.actions
-		const actionInfo = {
+	async resolveAction(audit?: GuildAuditLogsEntry | null, data?: GuildChannel | Role | GuildBan): Promise<void> {
+		if (!audit?.executor || this.isCIA(audit.executor.id)) return
+
+		if (!this.actions.has(audit.executor.id)) this.actions.set(audit.executor.id, new Collection())
+
+		const db = this.actions.get(audit.executor.id)!
+		const actionInfo: Action = {
 			id: audit.id,
 			executorId: audit.executor.id,
-			guildId: this.id,
 			type: audit.actionType,
-			timestamp: audit.createdTimestamp
+			timestamp: audit.createdTimestamp,
+			data: data ? convertToRaw(data, audit.actionType) : null
 		}
 
 		db.set(actionInfo.id, actionInfo)
 
 		setTimeout(() => db.delete(actionInfo.id), config.TIMEOUT)
 
-		const limited = db.filter((action) => action.executorId === actionInfo.executorId && action.type === actionInfo.type && action.guildId === this.id).size >= config.LIMITS[actionInfo.type]
+		if (!this.isIgnored(audit.executor.id) && !this.running.has(audit.executor.id)) {
+			const limited = db.filter((action) => action.type === actionInfo.type).size >= config.LIMITS[actionInfo.type]
 
-		if (limited) {
-			if (this.running.has(audit.executor.id)) return
+			if (limited) {
+				this.running.add(audit.executor.id)
 
-			this.running.add(audit.executor.id)
+				this.owner?.dm(`**${audit.executor.tag}** (ID: \`${audit.executor.id}\`) is limited!!\nType: \`${actionInfo.type}\``)
 
-			this.owner?.dm(`**${audit.executor.tag}** (ID: \`${audit.executor.id}\`) is limited!!\nType: \`${actionInfo.type}\``)
-			
-			await Promise.allSettled([
-				this.members.edit(actionInfo.executorId, { roles: [] }, 'Anti-raid'),
-				this.roles.botRoleFor(actionInfo.executorId)?.setPermissions(0n, 'Anti-raid'),
-			])
+				const botRole = this.roles.botRoleFor(actionInfo.executorId)
 
-			this.running.delete(audit.executor.id)
+				await Promise.allSettled([
+					this.members.edit(actionInfo.executorId, { roles: botRole ? [botRole] : [] }, USER_REASON),
+					botRole?.setPermissions(0n, USER_REASON)
+				])
+
+				await Promise.allSettled(db.reduce((cur, d) => {
+					if (d.data) cur.push(d.data)
+					return cur
+				}, <RawData[]>[]).map((thing) => rePast(thing, this)) as Promise<unknown>[])
+
+
+				this.running.delete(audit.executor.id)
+			}
 		}
 
 		if (this.running.has('GLOBAL')) return
 
-		const globalLimited = db.filter((action) => action.type === actionInfo.type && action.guildId === this.id && Date.now() - action.timestamp <= 15000)
 
-		if (globalLimited.size >= 5) { // 5/15s on the same action, That's mean multiple attackers..
+		const globalLimited = this.actions
+			.reduce((cur, actions) => {
+				cur.push(...actions.values())
+				return cur
+			}, <Action[]>[])
+			.filter((action) => action.type === actionInfo.type && (Date.now() - action.timestamp) <= 15000)
+
+
+		if (globalLimited.length >= 5) { // 5/15s on the same action, That's mean multiple attackers..
 			this.running.add('GLOBAL')
 
 			for (let i = 0; i < 5; i++) {
 				this.owner?.dm('**WARNING: GLOBAL RATE LIMIT WAKE UP!!**')
 			}
 
-			const promises = [
-				this.roles.cache.map((role) => {
-					if (role.editable) return role.setPermissions(0n, 'Anti-raid (GLOBAL LIMIT)')
-				}),
-				globalLimited.map(({ executorId }) => {
-					return this.bans.create(executorId, { reason: 'Anti-raid (GLOBAL LIMIT)' })
-				})
+			const promises: Promise<unknown>[][] = [
+				this.roles.cache.map((role) => role.editable ? role.setPermissions(role.permissions.freeze().remove(config.BAD_PERMISSIONS), GLOBAL_REASON) : Promise.resolve()),
+				globalLimited.map(({ executorId }) => this.isIgnored(executorId) ? Promise.resolve() : this.bans.create(executorId, { reason: GLOBAL_REASON }))
 			]
 
 			await Promise.allSettled(promises.flat() as Promise<unknown>[])
+
+			await this.setVerificationLevel('VERY_HIGH').catch(() => null)
 
 			this.running.delete('GLOBAL')
 		}
@@ -91,6 +132,6 @@ Structures.extend('Guild', Base => class Guild extends Base {
 	}
 
 	isIgnored(id: Snowflake): boolean {
-		return id === this.ownerID || id === this.client.user!.id || config.WHITE_LIST.includes(id) || config.IGNORED_CHANNELS.includes(id)
+		return this.isCIA(id) || config.WHITE_LIST.includes(id) || config.IGNORED_CHANNELS.includes(id)
 	}
 })

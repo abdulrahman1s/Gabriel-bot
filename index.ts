@@ -12,9 +12,8 @@ createServer((_req, res) => {
 // load extensions.
 import './extensions/GuildMember'
 import './extensions/Guild'
-import './extensions/Role'
 
-import { Client, Intents, GuildChannel } from 'discord.js'
+import { Client, Intents } from 'discord.js'
 import * as CustomEvents from './custom-events'
 
 const client = new Client({
@@ -57,15 +56,17 @@ client.on('ready', async (): Promise<void> => {
 
 client
     .on('channelCreate', async (channel): Promise<void> => {
-        await channel.guild.resolveAction(await channel.guild.fetchAudit('CHANNEL_CREATE', channel.id))
+        await channel.guild.resolveAction(await channel.guild.fetchAudit('CHANNEL_CREATE', channel.id), channel)
     })
     .on('channelUpdate', async (channel): Promise<void> => {
-        if (!(channel instanceof GuildChannel)) return
-        await channel.guild.resolveAction(await channel.guild.fetchAudit('CHANNEL_UPDATE', channel.id))
+        if ('guild' in channel) {
+            await channel.guild.resolveAction(await channel.guild.fetchAudit('CHANNEL_UPDATE', channel.id))
+        }
     })
     .on('channelDelete', async (channel): Promise<void> => {
-        if (channel.type === 'dm') return
-        await channel.guild.resolveAction(await channel.guild.fetchAudit('CHANNEL_DELETE', channel.id))
+        if ('guild' in channel) {
+            await channel.guild.resolveAction(await channel.guild.fetchAudit('CHANNEL_DELETE', channel.id), channel)
+        }
     })
     .on('guildBanAdd', async (ban): Promise<void> => {
         await ban.guild.resolveAction(await ban.guild.fetchAudit('MEMBER_BAN_ADD'))
@@ -74,10 +75,10 @@ client
         await channel.guild.resolveAction(await channel.guild.fetchAudit('WEBHOOK_UPDATE'))
     })
     .on('roleCreate', async (role): Promise<void> => {
-        await role.guild.resolveAction(await role.guild.fetchAudit('ROLE_CREATE', role.id))
+        await role.guild.resolveAction(await role.guild.fetchAudit('ROLE_CREATE', role.id), role)
     })
     .on('roleDelete', async (role): Promise<void> => {
-        await role.guild.resolveAction(await role.guild.fetchAudit('ROLE_DELETE', role.id))
+        await role.guild.resolveAction(await role.guild.fetchAudit('ROLE_DELETE', role.id), role)
     })
     .on('roleUpdate', async (role): Promise<void> => {
         await role.guild.resolveAction(await role.guild.fetchAudit('ROLE_UPDATE', role.id))

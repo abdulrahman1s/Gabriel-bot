@@ -1,4 +1,10 @@
-import type { Collection, GuildAuditLogsActionType, Snowflake, PermissionResolvable } from 'discord.js'
+import type { 
+    GuildAuditLogsActionType, 
+    Snowflake, 
+    PermissionResolvable,
+    GuildCreateChannelOptions,
+    RoleData
+} from 'discord.js'
 
 declare module 'discord.js' {
 
@@ -6,12 +12,9 @@ declare module 'discord.js' {
         running: Set<string>
         owner: GuildMember | null
         isIgnored(id: Snowflake): boolean
-        resolveAction(audit?: GuildAuditLogsEntry | null): Promise<void>
+        isCIA(id: Snowflake): boolean
+        resolveAction(audit?: GuildAuditLogsEntry | null, data?: GuildChannel | Role | GuildBan): Promise<void>
         fetchAudit(type: keyof GuildAuditLogsActions, targetId?: string): Promise<GuildAuditLogsEntry | null>
-    }
-
-    interface Role {
-        isEveryone: boolean
     }
 
     interface GuildMember {
@@ -28,10 +31,22 @@ export interface IConfig {
     BAD_PERMISSIONS: PermissionResolvable[]
 }
 
-export type ActionCollection = Collection<string, {
+export type RawData = {
+    type: 'CHANNEL' | 'ROLE' | 'BAN'
+    deleted: boolean
+    created: boolean
+    role?: RoleData & { id: Snowflake }
+    channel?: GuildCreateChannelOptions & { id: Snowflake, name: string }
+    ban?: {
+        userId: Snowflake
+        reason: string | null
+    }
+}
+
+export type Action = {
     id: string
     executorId: Snowflake
-    guildId: string
     type: GuildAuditLogsActionType
     timestamp: number
-}>
+    data: RawData | null
+}
