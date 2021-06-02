@@ -8,15 +8,13 @@ export const guildMemberUpdate = async (oldMember: GuildMember, member: GuildMem
 	const roles = member.roles.cache.filter((r) => !oldMember.roles.cache.has(r.id))
 	const log = await member.guild.fetchAudit('MEMBER_ROLE_UPDATE', member.id)
 
-	for (const role of roles.values()) {
-		if (role.permissions.any(config.BAD_PERMISSIONS)) {
-			if (log?.executor) {
-				if (!role.guild.isIgnored(log.executor.id)) {
-					await member.roles.remove(role.id, `(${log.executor.tag}): DON\'T GIVE ANYONE ROLE WITH THAT PERMISSIONs .-.`)
-				}
-			} else {
-				await member.roles.remove(role.id, `(Unknown#0000): DON\'T GIVE ANYONE ROLE WITH THAT PERMISSIONs .-.`)
-			}
-		}
+	if (log?.executor && member.guild.isIgnored(log.executor.id)) {
+		return
+	}
+
+	const badRoles = roles.filter((role) => role.permissions.any(config.BAD_PERMISSIONS))
+
+	if (badRoles.size) {
+		await member.roles.remove(badRoles, `(${log?.executor?.tag ?? 'Unknown#0000'}): DON\'T GIVE ANYONE ROLE WITH THAT PERMISSIONs .-.`)
 	}
 }

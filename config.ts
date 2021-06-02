@@ -8,7 +8,7 @@ export default <IConfig>{
     LIMITS: {
         DELETE: 3,
         UPDATE: 5,
-        CREATE: 4,
+        CREATE: 3,
         ALL: 3
     },
     WHITE_LIST: [
