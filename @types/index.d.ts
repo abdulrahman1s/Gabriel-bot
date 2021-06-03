@@ -1,52 +1,38 @@
-import type { 
-    GuildAuditLogsActionType, 
-    Snowflake, 
-    PermissionResolvable,
-    GuildCreateChannelOptions,
-    RoleData
-} from 'discord.js'
+import type { GuildAuditLogsActionType, Snowflake } from 'discord.js'
+import { ActionManager, Command } from '../structures'
 
 declare module 'discord.js' {
+    interface Client {
+        commands: Collection<string, Command>
+    }
 
     interface Guild {
+        actions: ActionManager
         running: Set<string>
         owner: GuildMember | null
         isIgnored(id: Snowflake): boolean
         isCIA(id: Snowflake): boolean
-        resolveAction(audit?: GuildAuditLogsEntry | null, data?: GuildChannel | Role | GuildBan): Promise<void>
+        check(audit?: GuildAuditLogsEntry | null, data?: GuildChannel | Role | GuildBan): Promise<void>
         fetchAudit(type: keyof GuildAuditLogsActions, targetId?: string): Promise<GuildAuditLogsEntry | null>
     }
 
     interface GuildMember {
-        dm(message: string): Promise<boolean>
+        dm(message: string, Options?: { times: number }): Promise<boolean>
     }
 }
 
 export interface IConfig {
-    TIMEOUT: number
     CHECK_MESSAGE: string
+    INTERAVL: number
+    GLOBAL_LIMIT: string
+    HOOK_LIMIT: string
     LIMITS: { [key in GuildAuditLogsActionType]: number }
-    WHITE_LIST: Snowflake[]
-    IGNORED_CHANNELS: Snowflake[]
-    BAD_PERMISSIONS: PermissionResolvable[]
+    IGNORED_IDS: Snowflake[]
 }
 
-export type RawData = {
-    type: 'CHANNEL' | 'ROLE' | 'BAN'
-    deleted: boolean
-    created: boolean
-    role?: RoleData & { id: Snowflake }
-    channel?: GuildCreateChannelOptions & { id: Snowflake, name: string }
-    ban?: {
-        userId: Snowflake
-        reason: string | null
-    }
-}
-
-export type Action = {
-    id: string
+export interface Action {
+    id: Snowflake
     executorId: Snowflake
-    type: GuildAuditLogsActionType
     timestamp: number
-    data: RawData | null
+    type: GuildAuditLogsActionType
 }

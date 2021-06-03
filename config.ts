@@ -1,17 +1,18 @@
 import type { IConfig } from '@types'
-import { Permissions } from 'discord.js'
 import ms from 'ms'
 
-export default <IConfig>{
-    TIMEOUT: ms('3 minutes'),
+export default <IConfig> {
     CHECK_MESSAGE: '\\._.',
+    INTERAVL: ms('3 minutes'),
+    GLOBAL_LIMIT: '5/15s',
+    HOOK_LIMIT: '3/5s',
     LIMITS: {
         DELETE: 3,
         UPDATE: 5,
-        CREATE: 3,
+        CREATE: 4,
         ALL: 3
     },
-    WHITE_LIST: [
+    IGNORED_IDS: [
         // Owners
         '567399605877080071',
         // Administrator bots
@@ -21,21 +22,9 @@ export default <IConfig>{
         '557628352828014614', // Ticket Tool
         '240254129333731328', // Vortex
         '841928041051848724', // Code Station
-    ],
-    IGNORED_CHANNELS: [
-        '764473678686978048', // Audit-log
-        '800788335563505714', // Mod-log
-        '814453330486100008', // Invites-log
-    ], 
-    BAD_PERMISSIONS: [
-        Permissions.FLAGS.ADMINISTRATOR,
-        Permissions.FLAGS.MANAGE_CHANNELS,
-        Permissions.FLAGS.MANAGE_GUILD,
-        Permissions.FLAGS.MANAGE_MESSAGES,
-        Permissions.FLAGS.MANAGE_NICKNAMES,
-        Permissions.FLAGS.MANAGE_ROLES,
-        Permissions.FLAGS.MANAGE_WEBHOOKS,
-        Permissions.FLAGS.BAN_MEMBERS,
-        Permissions.FLAGS.KICK_MEMBERS
+        // Channels
+        '764473678686978048', // #Audit-log
+        '800788335563505714', // #Mod-log
+        '814453330486100008', // #Invites-log
     ]
 }
