@@ -8,7 +8,8 @@
   "scripts": {
     "start-debug": "ts-node index.ts",
     "start": "node ./dist/index",
-    "build": "./node_modules/.bin/tsup --target node14 ./index.ts"
+    "build": "./node_modules/.bin/tsup --target node14 ./index.ts",
+    "test": "ts-node -T Constants"
   },
   "dependencies": {
     "discord.js": "github:discordjs/discord.js#086c3f0799d65c64c4e60d6370246a37a27a1eab",

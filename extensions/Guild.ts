@@ -1,110 +1,72 @@
-import type { Action, RawData } from '@types'
-import type { GuildAuditLogsActions, GuildAuditLogsEntry, Snowflake, Role, GuildBan, GuildChannel, Guild } from 'discord.js'
-import { Structures, Permissions, Collection } from 'discord.js'
-import { convertToRaw } from '../utils'
+import type { Action } from '@types'
+import type { GuildAuditLogsActions, GuildAuditLogsEntry, Snowflake } from 'discord.js'
+import { Structures, Permissions } from 'discord.js'
+import { ActionManager } from '../structures'
+import { BAD_PERMISSIONS, LIMITS } from '../Constants'
 import config from '../config'
 
-const USER_REASON = 'Anti-raid', GLOBAL_REASON = USER_REASON + ' (GLOBAL RATE LIMIT)'
 
-const rePast = (thing: RawData, guild: Guild) => {
-	if (thing.created) {
-		switch (thing.type) {
-			case 'BAN': return guild.bans.remove(thing.ban!.userId)
-			case 'CHANNEL': return Promise.resolve(guild.channels.cache.get(thing.channel!.id)?.delete())
-			case 'ROLE': return Promise.resolve(guild.roles.cache.get(thing.role!.id)?.delete())
-		}
-	} else if (thing.deleted) {
-		switch (thing.type) {
-			case 'BAN': return guild.bans.create(thing.ban!.userId)
-			case 'CHANNEL': return guild.channels.create(thing.channel!.name, thing.channel!)
-			case 'ROLE':
-				if (thing.role!.permissions === 0n) delete thing.role!.permissions 
-				return guild.roles.create(thing.role)
-		}
-	} else throw new Error('un-handled audit type')
-}
 
 
 Structures.extend('Guild', Base => class Guild extends Base {
-	private readonly actions = new Collection<string, Collection<string, Action>>()
+	readonly actions = new ActionManager()
 	readonly running = new Set<string>()
 
 	get owner() {
 		return this.members.cache.get(this.ownerID) ?? null
 	}
 
-	isCIA(id: Snowflake): boolean {
-		return id === this.ownerID || id === this.client.user!.id
-	}
 
-	async resolveAction(audit?: GuildAuditLogsEntry | null, data?: GuildChannel | Role | GuildBan): Promise<void> {
+	async check(audit?: GuildAuditLogsEntry | null): Promise<void> {
 		if (!audit?.executor || this.isCIA(audit.executor.id)) return
+		if ((audit.target as { id?: string })?.id === audit.executor.id) return
 
-		if (!this.actions.has(audit.executor.id)) this.actions.set(audit.executor.id, new Collection())
-
-		const db = this.actions.get(audit.executor.id)!
-		const actionInfo: Action = {
+		const action: Action = {
 			id: audit.id,
 			executorId: audit.executor.id,
-			type: audit.actionType,
 			timestamp: audit.createdTimestamp,
-			data: data ? convertToRaw(data, audit.actionType) : null
+			type: audit.actionType
 		}
 
-		db.set(actionInfo.id, actionInfo)
+		const db = this.actions.add(action)
 
-		setTimeout(() => db.delete(actionInfo.id), config.TIMEOUT)
-
-		if (!this.isIgnored(audit.executor.id) && !this.running.has(audit.executor.id)) {
-			const limited = db.filter((action) => action.type === actionInfo.type).size >= config.LIMITS[actionInfo.type]
+		if (!this.isIgnored(action.executorId) && !this.running.has(action.executorId)) {
+			const limited = db.filter(({ type }) => type === action.type).size >= LIMITS[action.type]
 
 			if (limited) {
 				this.running.add(audit.executor.id)
 
-				this.owner?.dm(`**${audit.executor.tag}** (ID: \`${audit.executor.id}\`) is limited!!\nType: \`${actionInfo.type}\``)
+				this.owner?.dm(`**${audit.executor.tag}** (ID: \`${action.executorId}\`) is limited!!\nType: \`${action.type}\``)
 
-				const botRole = this.roles.botRoleFor(actionInfo.executorId)
+				const botRole = this.roles.botRoleFor(action.executorId)
 
 				await Promise.allSettled([
-					this.members.edit(actionInfo.executorId, { roles: botRole ? [botRole] : [] }, USER_REASON),
-					botRole?.setPermissions(0n, USER_REASON)
+					this.members.edit(action.executorId, { roles: botRole ? [botRole] : [] }),
+					botRole?.setPermissions(0n)
 				])
 
-				await Promise.allSettled(db.reduce((cur, d) => {
-					if (d.data) cur.push(d.data)
-					return cur
-				}, <RawData[]>[]).map((thing) => rePast(thing, this)) as Promise<unknown>[])
-
-
-				this.running.delete(audit.executor.id)
+				this.running.delete(action.executorId)
 			}
 		}
 
 		if (this.running.has('GLOBAL')) return
 
 
-		const globalLimited = this.actions
-			.reduce((cur, actions) => {
-				cur.push(...actions.values())
-				return cur
-			}, <Action[]>[])
-			.filter((action) => action.type === actionInfo.type && (Date.now() - action.timestamp) <= 15000)
+		const globalLimited = this.actions.flat().filter(({ type, timestamp }) => type === action.type && (Date.now() - timestamp) <= LIMITS.GLOBAL.TIME)
 
 
-		if (globalLimited.length >= 5) { // 5/15s on the same action, That's mean multiple attackers..
+		if (globalLimited.length >= LIMITS.GLOBAL.MAX) {
 			this.running.add('GLOBAL')
 
-			for (let i = 0; i < 5; i++) {
-				this.owner?.dm('**WARNING: GLOBAL RATE LIMIT WAKE UP!!**')
-			}
+			this.owner?.dm('**WARNING: GLOBAL RATE LIMIT WAKE UP!!**', { times: 5 })
 
 			const promises: Promise<unknown>[][] = [
-				this.roles.cache.map((role) => role.editable ? role.setPermissions(role.permissions.freeze().remove(config.BAD_PERMISSIONS), GLOBAL_REASON) : Promise.resolve()),
-				globalLimited.map(({ executorId }) => this.isIgnored(executorId) ? Promise.resolve() : this.bans.create(executorId, { reason: GLOBAL_REASON }))
+				this.roles.cache.map((role) => role.setPermissions(role.permissions.freeze().remove(BAD_PERMISSIONS))),
+				this.channels.cache.map((channel) => channel.permissionOverwrites.filter((overwrite) => overwrite.allow.any(BAD_PERMISSIONS)).map((overwrite) => overwrite.delete())).flat(),
+				globalLimited.map(({ executorId }) => this.isIgnored(executorId) ? Promise.resolve() : this.bans.create(executorId))
 			]
 
-			await Promise.allSettled(promises.flat() as Promise<unknown>[])
-
+			await Promise.allSettled(promises.flat())
 			await this.setVerificationLevel('VERY_HIGH').catch(() => null)
 
 			this.running.delete('GLOBAL')
@@ -113,7 +75,6 @@ Structures.extend('Guild', Base => class Guild extends Base {
 
 	async fetchAudit(type: keyof GuildAuditLogsActions, targetId?: string): Promise<GuildAuditLogsEntry | null> {
 		try {
-			if (!this.me) await this.members.fetch(this.client.user!.id)
 			if (!this.me?.permissions.has(Permissions.FLAGS.MANAGE_GUILD)) return null
 
 			const log = await this.fetchAuditLogs({ type, limit: 1 }).then(({ entries }) => entries.first())
@@ -125,13 +86,16 @@ Structures.extend('Guild', Base => class Guild extends Base {
 			if (targetId && (log.target as { id?: string })?.id !== targetId) return null
 
 			return log
-		} catch (e) {
-			console.error(e)
+		} catch {
 			return null
 		}
 	}
 
+	isCIA(id: Snowflake): boolean {
+		return id === this.ownerID || id === this.client.user!.id
+	}
+
 	isIgnored(id: Snowflake): boolean {
-		return this.isCIA(id) || config.WHITE_LIST.includes(id) || config.IGNORED_CHANNELS.includes(id)
+		return this.isCIA(id) || config.IGNORED_IDS.includes(id)
 	}
 })
