@@ -15,7 +15,7 @@ const checker = async (message: Message): Promise<void> => {
 	}
 }
 
-const hookDatect = async (message: Message): Promise<void> => {
+const hook = async (message: Message): Promise<void> => {
 	if (!message.guild) return
 	if (!message.webhookID || message.guild.isIgnored(message.channel.id)) return
 
@@ -68,6 +68,6 @@ const commandProcess = async (message: Message): Promise<void> => {
 
 export const message = (message: Message) => Promise.all([
 	checker(message),
-	hookDatect(message),
+	hook(message),
 	commandProcess(message)
 ])

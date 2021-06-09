@@ -1,27 +1,34 @@
 import type { GuildAuditLogsActionType, Snowflake } from 'discord.js'
-import { ActionManager, Command } from '../structures'
+import type { ActionManager } from '../structures'
 
 declare module 'discord.js' {
+    interface Command {
+        name: string
+        run(message: Message, args: string[]): Promise<void | unknown> | void | unknown
+    }
+
     interface Client {
         commands: Collection<string, Command>
+        loadCommands(): number
+        loadEvents(): number
     }
 
     interface Guild {
-        actions: ActionManager
-        running: Set<string>
+        readonly actions: ActionManager
+        readonly running: Set<'GLOBAL' | Snowflake>
         owner: GuildMember | null
         isIgnored(id: Snowflake): boolean
         isCIA(id: Snowflake): boolean
-        check(audit?: GuildAuditLogsEntry | null, data?: GuildChannel | Role | GuildBan): Promise<void>
+        check(audit?: GuildAuditLogsEntry | null): Promise<void>
         fetchAudit(type: keyof GuildAuditLogsActions, targetId?: string): Promise<GuildAuditLogsEntry | null>
     }
 
     interface GuildMember {
-        dm(message: string, Options?: { times: number }): Promise<boolean>
+        dm(message: unknown, Options?: { times: number }): Promise<boolean>
     }
 }
 
-export interface IConfig {
+interface IConfig {
     CHECK_MESSAGE: string
     INTERAVL: number
     GLOBAL_LIMIT: string
@@ -30,7 +37,7 @@ export interface IConfig {
     IGNORED_IDS: Snowflake[]
 }
 
-export interface Action {
+interface Action {
     id: Snowflake
     executorId: Snowflake
     timestamp: number

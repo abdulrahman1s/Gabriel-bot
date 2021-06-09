@@ -1,5 +1,4 @@
-import type { Message } from 'discord.js'
-import type { Command } from '../structures'
+import type { Message, Command } from 'discord.js'
 
 export class PingCommand implements Command {
 	name = 'ping'
