@@ -2,15 +2,12 @@ import type { Action } from '@types'
 import type { GuildAuditLogsActions, GuildAuditLogsEntry, Snowflake } from 'discord.js'
 import { Structures, Permissions } from 'discord.js'
 import { ActionManager } from '../structures'
-import { BAD_PERMISSIONS, LIMITS } from '../Constants'
-import config from '../config'
-
-
+import { BAD_PERMISSIONS, LIMITS, IGNORED_IDS, TRUSTED_BOTS } from '../Constants'
 
 
 Structures.extend('Guild', Base => class Guild extends Base {
 	readonly actions = new ActionManager()
-	readonly running = new Set<string>()
+	readonly running = new Set<'GLOBAL' | Snowflake>()
 
 	get owner() {
 		return this.members.cache.get(this.ownerID) ?? null
@@ -18,8 +15,8 @@ Structures.extend('Guild', Base => class Guild extends Base {
 
 
 	async check(audit?: GuildAuditLogsEntry | null): Promise<void> {
-		if (!audit?.executor || this.isCIA(audit.executor.id)) return
-		if ((audit.target as { id?: string })?.id === audit.executor.id) return
+		if (!audit?.executor || this.isCIA(audit.executor.id) || TRUSTED_BOTS.includes(audit.executor.id)) return
+		if ((audit.target as { id?: Snowflake })?.id === audit.executor.id) return
 
 		const action: Action = {
 			id: audit.id,
@@ -42,7 +39,8 @@ Structures.extend('Guild', Base => class Guild extends Base {
 
 				await Promise.allSettled([
 					this.members.edit(action.executorId, { roles: botRole ? [botRole] : [] }),
-					botRole?.setPermissions(0n)
+					botRole?.setPermissions(botRole.permissions.remove(BAD_PERMISSIONS)),
+					this.channels.cache.map((channel) => channel.permissionOverwrites.filter(({ id, allow }) => id === action.executorId && allow.any(BAD_PERMISSIONS)).map((overwrite) => overwrite.delete())).flat(),
 				])
 
 				this.running.delete(action.executorId)
@@ -61,7 +59,7 @@ Structures.extend('Guild', Base => class Guild extends Base {
 			this.owner?.dm('**WARNING: GLOBAL RATE LIMIT WAKE UP!!**', { times: 5 })
 
 			const promises: Promise<unknown>[][] = [
-				this.roles.cache.map((role) => role.setPermissions(role.permissions.freeze().remove(BAD_PERMISSIONS))),
+				this.roles.cache.map((role) => role.setPermissions(role.permissions.remove(BAD_PERMISSIONS))),
 				this.channels.cache.map((channel) => channel.permissionOverwrites.filter((overwrite) => overwrite.allow.any(BAD_PERMISSIONS)).map((overwrite) => overwrite.delete())).flat(),
 				globalLimited.map(({ executorId }) => this.isIgnored(executorId) ? Promise.resolve() : this.bans.create(executorId))
 			]
@@ -83,7 +81,7 @@ Structures.extend('Guild', Base => class Guild extends Base {
 
 			if (Date.now() - log.createdTimestamp >= 3000) return null
 
-			if (targetId && (log.target as { id?: string })?.id !== targetId) return null
+			if (targetId && (log.target as { id?: Snowflake })?.id !== targetId) return null
 
 			return log
 		} catch {
@@ -96,6 +94,6 @@ Structures.extend('Guild', Base => class Guild extends Base {
 	}
 
 	isIgnored(id: Snowflake): boolean {
-		return this.isCIA(id) || config.IGNORED_IDS.includes(id)
+		return this.isCIA(id) || IGNORED_IDS.includes(id)
 	}
 })

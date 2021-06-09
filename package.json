@@ -12,15 +12,15 @@
     "test": "ts-node -T Constants"
   },
   "dependencies": {
-    "discord.js": "github:discordjs/discord.js#086c3f0799d65c64c4e60d6370246a37a27a1eab",
+    "discord.js": "github:discordjs/discord.js#7b2e12b102984abf61132e1057558ef7f04e6d83",
     "dotenv": "10.0.0",
     "ms": "^2.1.3"
   },
   "devDependencies": {
     "@types/ms": "^0.7.31",
-    "@types/node": "^15.6.1",
+    "@types/node": "^15.12.2",
     "ts-node": "^9.1.1",
-    "tsup": "^4.11.1",
+    "tsup": "^4.11.2",
     "typescript": "^4.3.2"
   },
   "engines": {

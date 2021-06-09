@@ -1,16 +1,17 @@
 import { Structures } from 'discord.js'
 
 Structures.extend('GuildMember', Base => class GuildMember extends Base {
-	async dm(message: string, { times = 1 } = {}): Promise<boolean> {
-		
-		for (let i = 0; i < times; i++) {
+	async dm(message: unknown, { times = 1 } = {}): Promise<boolean> {
+		let i = 0, success = false
+
+		while (i++ < times) {
 			try {
-				await this.send(message)
+				await this.send(String(message))
 			} catch {
-				return false
+				return success
 			}
 		}
 		
-		return true
+		return success = true
 	}
 })
