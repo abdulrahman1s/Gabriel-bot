@@ -1,17 +1,25 @@
 import { Structures } from 'discord.js'
 
-Structures.extend('GuildMember', Base => class GuildMember extends Base {
-	async dm(message: unknown, { times = 1 } = {}): Promise<boolean> {
-		let i = 0, success = false
+class GuildMember extends Structures.get('GuildMember') {
+    async dm(message: unknown, { times = 1 } = {}): Promise<boolean> {
+        if (typeof message !== 'string') message = String(message)
 
-		while (i++ < times) {
-			try {
-				await this.send(String(message))
-			} catch {
-				return success
-			}
-		}
-		
-		return success = true
-	}
-})
+        let i = 0
+
+        const channel = await this.createDM().catch(() => null)
+
+        if (!channel) return false
+
+        while (i++ < times) {
+            try {
+                await channel.send(message as string)
+            } catch {
+                return false
+            }
+        }
+
+        return true
+    }
+}
+
+Structures.extend('GuildMember', () => GuildMember)

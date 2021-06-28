@@ -8,20 +8,22 @@
   "scripts": {
     "start-debug": "ts-node index.ts",
     "start": "node ./dist/index",
-    "build": "./node_modules/.bin/tsup --target node14 ./index.ts",
-    "test": "ts-node -T Constants"
+    "build": "tsup --target node14 ./index.ts",
+    "test": "ts-node -T test",
+    "format": "prettier --write **/*.ts"
   },
   "dependencies": {
-    "discord.js": "github:discordjs/discord.js#7b2e12b102984abf61132e1057558ef7f04e6d83",
+    "discord.js": "github:discordjs/discord.js#03d3a5cdde5492433d27bbfe46afe0ebf2de5904",
     "dotenv": "10.0.0",
     "ms": "^2.1.3"
   },
   "devDependencies": {
     "@types/ms": "^0.7.31",
-    "@types/node": "^15.12.2",
-    "ts-node": "^9.1.1",
-    "tsup": "^4.11.2",
-    "typescript": "^4.3.2"
+    "@types/node": "^15.12.5",
+    "prettier": "^2.3.2",
+    "ts-node": "^10.0.0",
+    "tsup": "^4.12.0",
+    "typescript": "^4.3.4"
   },
   "engines": {
     "node": ">=14"

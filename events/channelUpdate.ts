@@ -1,67 +1,65 @@
-import type { GuildChannel, PermissionString, PermissionObject } from 'discord.js'
+import type { DMChannel, GuildChannel } from 'discord.js'
 import { Permissions } from 'discord.js'
-import { BAD_PERMISSIONS, BAD_PERMISSIONS_OBJECT } from '../Constants'
-const BAD_PERMISSIONS_STRING = Object.keys(BAD_PERMISSIONS_OBJECT) as PermissionString[]
+import { BAD_PERMISSIONS } from '../Constants'
+import { overwriteSerializer } from '../utils'
 
+const BAD_PERMISSIONS_STRING = new Permissions(BAD_PERMISSIONS).remove(Permissions.FLAGS.ADMINISTRATOR).toArray()
 
-const overwriteSerializer = ({ allow = 0n, deny = 0n }): PermissionObject => {
-	const permissions = <{ [key in PermissionString]: boolean }>{}
+BAD_PERMISSIONS_STRING.unshift('ADMINISTRATOR')
 
-	for (const permission of Object.keys(Permissions.FLAGS) as PermissionString[]) {
-		if (allow & Permissions.FLAGS[permission]) {
-			permissions[permission] = true
-		} else if (deny & Permissions.FLAGS[permission]) {
-			permissions[permission] = false
-		}
-	}
+export const channelUpdate = async (
+    oldChannel: GuildChannel | DMChannel,
+    channel: GuildChannel | DMChannel
+): Promise<void> => {
+    if (!('guild' in channel && 'guild' in oldChannel)) return
 
-	return permissions
-}
+    const addedOverwrites = channel.permissionOverwrites.filter(
+        ({ id, allow }) =>
+            !oldChannel.permissionOverwrites.has(id) && allow.any(BAD_PERMISSIONS) && !channel.guild.isIgnored(id)
+    )
 
-export const channelUpdate = async (oldChannel: GuildChannel, channel: GuildChannel): Promise<void> => {
-	if (!channel.guild) return
+    const updatedOverwrites = channel.permissionOverwrites.filter(({ id, allow }) => {
+        const oldOverwrite = oldChannel.permissionOverwrites.get(id)
+        if (!oldOverwrite || allow.equals(oldOverwrite.allow)) return false
+        return allow.remove(oldOverwrite.allow).any(BAD_PERMISSIONS) && !channel.guild.isIgnored(id)
+    })
 
-	const addedOverwrites = channel.permissionOverwrites
-		.filter((overwrite) => !oldChannel.permissionOverwrites.has(overwrite.id) && overwrite.allow.any(BAD_PERMISSIONS))
-		.filter(({ id }) => !channel.guild.isIgnored(id))
+    const auditType = addedOverwrites.size
+        ? 'CHANNEL_OVERWRITE_CREATE'
+        : updatedOverwrites.size
+        ? 'CHANNEL_OVERWRITE_UPDATE'
+        : null
 
-	const updatedOverwrites = channel.permissionOverwrites.filter((overwrite) => {
-		const oldOverwrite = oldChannel.permissionOverwrites.get(overwrite.id)
-		if (!oldOverwrite || overwrite.allow.equals(oldOverwrite.allow)) return false
-		return overwrite.allow.remove(oldOverwrite.allow).any(BAD_PERMISSIONS)		 		
-	}).filter(({ id }) => !channel.guild.isIgnored(id))
+    if (!auditType) return
 
+    const { executor } = (await channel.guild.fetchEntry(auditType, channel.id)) ?? {}
 
-	const auditType = addedOverwrites.size
-		? 'CHANNEL_OVERWRITE_CREATE' 
-		: updatedOverwrites.size 
-			? 'CHANNEL_OVERWRITE_UPDATE' 
-			: null
+    if (executor && channel.guild.isIgnored(executor.id)) {
+        return
+    }
 
-	if (!auditType) return
+    if (addedOverwrites.size) {
+        await Promise.allSettled(
+            addedOverwrites.map((overwrite) =>
+                overwrite.delete(`(${executor?.tag ?? 'Unknown#0000'}): DETECT BAD PERMISSIONS!`)
+            )
+        )
+    }
 
-	const { executor } = await channel.guild.fetchAudit(auditType, channel.id) ?? {}
+    if (updatedOverwrites.size) {
+        await Promise.allSettled(
+            updatedOverwrites.map((overwrite) => {
+                const permissions = overwriteSerializer({
+                    allow: overwrite.allow.bitfield,
+                    deny: overwrite.deny.bitfield
+                })
 
-	if (executor && channel.guild.isIgnored(executor.id)) {
-		return
-	}
+                for (const bad of BAD_PERMISSIONS_STRING) {
+                    if (permissions[bad]) permissions[bad] = false
+                }
 
-	if (addedOverwrites.size) {
-		await Promise.allSettled(addedOverwrites.map((overwrite) => overwrite.delete(`(${executor?.tag ?? 'Unknown#0000'}): DETECT BAD PERMISSIONS!`)))
-	}
-
-	if (updatedOverwrites.size) {
-		await Promise.allSettled(updatedOverwrites.map((overwrite) => {
-			const permissions = overwriteSerializer({
-				allow: overwrite.allow.bitfield,
-				deny: overwrite.deny.bitfield
-			})
-
-			for (const bad of BAD_PERMISSIONS_STRING) {
-				if (permissions[bad]) permissions[bad] = false
-			}
-
-			return overwrite.update(permissions, `(${executor?.tag ?? 'Unknown#0000'}): DETECT BAD PERMISSIONS!`)
-		}))
-	}
+                return overwrite.update(permissions, `(${executor?.tag ?? 'Unknown#0000'}): DETECT BAD PERMISSIONS!`)
+            })
+        )
+    }
 }

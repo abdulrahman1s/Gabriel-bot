@@ -3,11 +3,11 @@ import botConfig from '../config'
 import ms from 'ms'
 
 export class ConfigCommand implements Command {
-	name = 'config'
-	run(message: Message): Promise<unknown> {
-		return message.reply({
-			code: 'js',
-			content: `const config = {
+    name = 'config'
+    run(message: Message): Promise<unknown> {
+        return message.reply({
+            code: 'js',
+            content: `const config = {
 	CIA_ENALBED: ${message.guild!.roles.highest.tags?.botID === message.client.user!.id}, // I have the highest role
 
 	TIMEOUT: "${ms(botConfig.INTERAVL, { long: true })}",
@@ -26,6 +26,6 @@ export class ConfigCommand implements Command {
 			
 	REMEMBER: "I'm not sleeping ._."
 };`
-		})
-	}
+        })
+    }
 }

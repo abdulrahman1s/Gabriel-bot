@@ -1,99 +1,139 @@
 import type { Action } from '@types'
-import type { GuildAuditLogsActions, GuildAuditLogsEntry, Snowflake } from 'discord.js'
-import { Structures, Permissions } from 'discord.js'
+import type { GuildAuditLogsActions, GuildAuditLogsActionType, GuildAuditLogsEntry, Snowflake, User } from 'discord.js'
+import { Structures } from 'discord.js'
+import { BAD_PERMISSIONS, IGNORED_IDS, LIMITS, TRUSTED_BOTS } from '../Constants'
 import { ActionManager } from '../structures'
-import { BAD_PERMISSIONS, LIMITS, IGNORED_IDS, TRUSTED_BOTS } from '../Constants'
 
 
-Structures.extend('Guild', Base => class Guild extends Base {
-	readonly actions = new ActionManager()
-	readonly running = new Set<'GLOBAL' | Snowflake>()
+class Guild extends Structures.get('Guild') {
+    readonly actions = new ActionManager()
+    readonly running = new Set<'GLOBAL' | Snowflake>()
 
-	get owner() {
-		return this.members.cache.get(this.ownerID) ?? null
-	}
+    get owner() {
+        return this.members.cache.get(this.ownerID) ?? null
+    }
 
+    private async _checkUser(user: User, entry: GuildAuditLogsEntry): Promise<boolean> {
+        const action: Action = {
+            id: entry.id,
+            executorId: user.id,
+            timestamp: entry.createdTimestamp,
+            type: entry.actionType
+        }
 
-	async check(audit?: GuildAuditLogsEntry | null): Promise<void> {
-		if (!audit?.executor || this.isCIA(audit.executor.id) || TRUSTED_BOTS.includes(audit.executor.id)) return
-		if ((audit.target as { id?: Snowflake })?.id === audit.executor.id) return
+        const db = this.actions.add(action)
 
-		const action: Action = {
-			id: audit.id,
-			executorId: audit.executor.id,
-			timestamp: audit.createdTimestamp,
-			type: audit.actionType
-		}
+        if (this.isIgnored(action.executorId) || this.running.has(action.executorId)) return false
 
-		const db = this.actions.add(action)
+        const limited = db.filter(({ type }) => type === action.type).size >= LIMITS[action.type]
 
-		if (!this.isIgnored(action.executorId) && !this.running.has(action.executorId)) {
-			const limited = db.filter(({ type }) => type === action.type).size >= LIMITS[action.type]
+        if (!limited) return false
 
-			if (limited) {
-				this.running.add(audit.executor.id)
+        this.owner?.dm(`**${user.tag}** (ID: \`${user.id}\`) is limited!!\nType: \`${entry.actionType}\``)
 
-				this.owner?.dm(`**${audit.executor.tag}** (ID: \`${action.executorId}\`) is limited!!\nType: \`${action.type}\``)
+        this.running.add(user.id)
 
-				const botRole = this.roles.botRoleFor(action.executorId)
+        const promises: Promise<unknown>[] = []
+        const botRole = this.roles.botRoleFor(user.id)
 
-				await Promise.allSettled([
-					this.members.edit(action.executorId, { roles: botRole ? [botRole] : [] }),
-					botRole?.setPermissions(botRole.permissions.remove(BAD_PERMISSIONS)),
-					this.channels.cache.map((channel) => channel.permissionOverwrites.filter(({ id, allow }) => id === action.executorId && allow.any(BAD_PERMISSIONS)).map((overwrite) => overwrite.delete())).flat(),
-				])
+        promises.push(this.members.edit(user.id, { roles: botRole ? [botRole] : [] }))
 
-				this.running.delete(action.executorId)
-			}
-		}
+        if (botRole) {
+            promises.push(botRole.setPermissions(botRole.permissions.remove(BAD_PERMISSIONS)))
+        }
 
-		if (this.running.has('GLOBAL')) return
+        const badOverwrites = this.channels.cache
+            .map((channel) => {
+                return channel.permissionOverwrites
+                    .filter(({ id, allow }) => id === user.id && allow.any(BAD_PERMISSIONS))
+                    .array()
+            })
+            .flat()
 
+        promises.push(...badOverwrites.map((overwrite) => overwrite.delete()))
 
-		const globalLimited = this.actions.flat().filter(({ type, timestamp }) => type === action.type && (Date.now() - timestamp) <= LIMITS.GLOBAL.TIME)
+        await Promise.allSettled(promises)
 
+        this.running.delete(user.id)
 
-		if (globalLimited.length >= LIMITS.GLOBAL.MAX) {
-			this.running.add('GLOBAL')
+        return true
+    }
 
-			this.owner?.dm('**WARNING: GLOBAL RATE LIMIT WAKE UP!!**', { times: 5 })
+    private async _checkGlobal(type: GuildAuditLogsActionType): Promise<void> {
+        if (this.running.has('GLOBAL')) return
 
-			const promises: Promise<unknown>[][] = [
-				this.roles.cache.map((role) => role.setPermissions(role.permissions.remove(BAD_PERMISSIONS))),
-				this.channels.cache.map((channel) => channel.permissionOverwrites.filter((overwrite) => overwrite.allow.any(BAD_PERMISSIONS)).map((overwrite) => overwrite.delete())).flat(),
-				globalLimited.map(({ executorId }) => this.isIgnored(executorId) ? Promise.resolve() : this.bans.create(executorId))
-			]
+        const limited = this.actions
+            .flat()
+            .filter((action) => action.type === type && Date.now() - action.timestamp <= LIMITS.GLOBAL.TIME)
 
-			await Promise.allSettled(promises.flat())
-			await this.setVerificationLevel('VERY_HIGH').catch(() => null)
+        if (!(limited.length >= LIMITS.GLOBAL.MAX)) return
 
-			this.running.delete('GLOBAL')
-		}
-	}
+        this.running.add('GLOBAL')
 
-	async fetchAudit(type: keyof GuildAuditLogsActions, targetId?: string): Promise<GuildAuditLogsEntry | null> {
-		try {
-			if (!this.me?.permissions.has(Permissions.FLAGS.MANAGE_GUILD)) return null
+        this.owner?.dm('**WARNING: GLOBAL RATE LIMIT WAKE UP!!**', { times: 5 })
 
-			const log = await this.fetchAuditLogs({ type, limit: 1 }).then(({ entries }) => entries.first())
+        const promises: Promise<unknown>[][] = [
+            this.roles.cache.map((role) => role.setPermissions(role.permissions.remove(BAD_PERMISSIONS))),
+            this.channels.cache
+                .map((channel) =>
+                    channel.permissionOverwrites
+                        .filter(({ allow }) => allow.any(BAD_PERMISSIONS))
+                        .map((overwrite) => overwrite.delete())
+                )
+                .flat(),
+            limited.map(({ executorId }) =>
+                this.isIgnored(executorId) ? Promise.resolve() : this.bans.create(executorId)
+            )
+        ]
 
-			if (!log) return null
+        await Promise.allSettled(promises.flat())
+        await this.setVerificationLevel('VERY_HIGH').catch(() => null)
 
-			if (Date.now() - log.createdTimestamp >= 3000) return null
+        this.running.delete('GLOBAL')
+    }
 
-			if (targetId && (log.target as { id?: Snowflake })?.id !== targetId) return null
+    async check(type: keyof GuildAuditLogsActions, targetId?: Snowflake): Promise<void> {
+        const entry = await this.fetchEntry(type, targetId), user = entry?.executor
 
-			return log
-		} catch {
-			return null
-		}
-	}
+        if (
+            entry &&
+            user &&
+            !this.isCIA(user.id) &&
+            !TRUSTED_BOTS.has(user.id) &&
+            (entry.target as { id?: Snowflake })?.id !== user.id
+        ) {
+            await Promise.all([
+                this._checkUser(user, entry),
+                this._checkGlobal(entry.actionType)
+            ])
+        }
+    }
 
-	isCIA(id: Snowflake): boolean {
-		return id === this.ownerID || id === this.client.user!.id
-	}
+    async fetchEntry(type: keyof GuildAuditLogsActions, targetId?: Snowflake): Promise<GuildAuditLogsEntry | null> {
+        try {
+            const entry = await this.fetchAuditLogs({ type, limit: 1 })
+                .then(({ entries }) => entries.first())
+                .catch(() => null)
 
-	isIgnored(id: Snowflake): boolean {
-		return this.isCIA(id) || IGNORED_IDS.includes(id)
-	}
-})
+            if (!entry) return null
+
+            if (Date.now() - entry.createdTimestamp > 3000) return null
+
+            if (targetId && (entry.target as { id?: Snowflake })?.id !== targetId) return null
+
+            return entry
+        } catch {
+            return null
+        }
+    }
+
+    isCIA(id: Snowflake): boolean {
+        return this.client.owners.has(id) || id === this.client.user!.id
+    }
+
+    isIgnored(id: Snowflake): boolean {
+        return this.isCIA(id) || IGNORED_IDS.includes(id)
+    }
+}
+
+Structures.extend('Guild', () => Guild)
