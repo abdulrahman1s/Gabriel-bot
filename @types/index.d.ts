@@ -1,16 +1,16 @@
-import type { GuildAuditLogsActionType, Snowflake } from 'discord.js'
+import type { GuildAuditLogsActionType, PermissionResolvable, Snowflake } from 'discord.js'
 import type { ActionManager } from '../structures'
 
 declare module 'discord.js' {
     interface Command {
         name: string
-        run(message: Message, args: string[]): Promise<void | unknown> | void | unknown
+        run(message: Message, args: string[]): Awaited<void | unknown>
     }
 
     interface Client {
-        commands: Collection<string, Command>
-        loadCommands(): number
-        loadEvents(): number
+        readonly commands: Collection<string, Command>
+        readonly owners: Collection<Snowflake, User>
+        load(type: 'commands' | 'events'): number
     }
 
     interface Guild {
@@ -19,27 +19,33 @@ declare module 'discord.js' {
         owner: GuildMember | null
         isIgnored(id: Snowflake): boolean
         isCIA(id: Snowflake): boolean
-        check(audit?: GuildAuditLogsEntry | null): Promise<void>
-        fetchAudit(type: keyof GuildAuditLogsActions, targetId?: string): Promise<GuildAuditLogsEntry | null>
+        check(type: keyof GuildAuditLogsActions, targetId?: Snowflake): Promise<void>
+        fetchEntry(type: keyof GuildAuditLogsActions, targetId?: Snowflake): Promise<GuildAuditLogsEntry | null>
     }
 
     interface GuildMember {
-        dm(message: unknown, Options?: { times: number }): Promise<boolean>
+        dm(message: unknown, options?: { times: number }): Promise<boolean>
     }
 }
 
-interface IConfig {
+type Config = Readonly<{
     CHECK_MESSAGE: string
     INTERAVL: number
     GLOBAL_LIMIT: string
     HOOK_LIMIT: string
     LIMITS: { [key in GuildAuditLogsActionType]: number }
     IGNORED_IDS: Snowflake[]
-}
+}>
 
-interface Action {
+type Action = {
     id: Snowflake
     executorId: Snowflake
     timestamp: number
     type: GuildAuditLogsActionType
+}
+
+type TrustedBot = {
+    id: Snowflake
+    name: string
+    permissions: PermissionResolvable
 }

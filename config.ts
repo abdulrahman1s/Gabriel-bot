@@ -1,7 +1,7 @@
-import type { IConfig } from '@types'
+import type { Config } from '@types'
 import ms from 'ms'
 
-export default <IConfig> {
+export default <Config>{
     CHECK_MESSAGE: '\\._.',
     INTERAVL: ms('3 minutes'),
     GLOBAL_LIMIT: '5/15s',
@@ -21,6 +21,6 @@ export default <IConfig> {
         // Channels
         '764473678686978048', // #Audit-log
         '800788335563505714', // #Mod-log
-        '814453330486100008', // #Invites-log
+        '814453330486100008' // #Invites-log
     ]
 }
