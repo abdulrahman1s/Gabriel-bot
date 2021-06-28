@@ -1,4 +1,4 @@
-import type { Command, Message } from 'discord.js'
+import { Command, Message, Util } from 'discord.js'
 import { inspect } from 'util'
 import { isPromise } from 'util/types'
 import { codeblock } from '../utils'
@@ -6,8 +6,6 @@ import { codeblock } from '../utils'
 export class EvalCommand implements Command {
     name = 'eval'
     async run(message: Message, args: string[]): Promise<unknown> {
-        const client = message.client
-
         let code = args.join(' '),
             output = 'Empty',
             type = 'unknown'
@@ -21,21 +19,30 @@ export class EvalCommand implements Command {
 
             if (isPromise(result)) {
                 output = await result
-                type = `Promise<${typeof output}>`
+                type = `Promise<${this.getType(output)}>`
             } else {
                 output = result
-                type = typeof output
+                type = this.getType(output)
             }
         } catch (error) {
             output = error
-            type = error?.name ?? typeof error
+            type = error?.name ?? this.getType(error)
         }
 
         output = inspect(output, { depth: 0 })
 
-        return message.reply({
-            content: `\`[output]:\` ${codeblock(output)}\n\`[type]:\` ${codeblock(type, 'ts')}`,
-            split: true
+        return Util.splitMessage(`\`[output]:\` ${codeblock(output)}\n\`[type]:\` ${codeblock(type, 'ts')}`, {
+            char: '\n',
+            maxLength: 1900
+        }).map((text) => {
+            return message.channel.send(text)
         })
+    }
+
+    getType(x: unknown): string {
+        if (x === null) return 'null'
+        if (typeof x === 'undefined') return 'void'
+        if (Number.isNaN(x)) return 'NaN'
+        return typeof x
     }
 }

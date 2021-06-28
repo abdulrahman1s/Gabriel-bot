@@ -1,13 +1,12 @@
-import type { Message, Command } from 'discord.js'
-import botConfig from '../config'
+import type { Command, Message } from 'discord.js'
 import ms from 'ms'
+import botConfig from '../config'
+import { codeblock } from '../utils'
 
 export class ConfigCommand implements Command {
     name = 'config'
     run(message: Message): Promise<unknown> {
-        return message.reply({
-            code: 'js',
-            content: `const config = {
+        const config = `const config = {
 	CIA_ENALBED: ${message.guild!.roles.highest.tags?.botID === message.client.user!.id}, // I have the highest role
 
 	TIMEOUT: "${ms(botConfig.INTERAVL, { long: true })}",
@@ -26,6 +25,7 @@ export class ConfigCommand implements Command {
 			
 	REMEMBER: "I'm not sleeping ._."
 };`
-        })
+
+        return message.reply(codeblock(config))
     }
 }
