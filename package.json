@@ -13,7 +13,7 @@
     "format": "prettier --write **/*.ts"
   },
   "dependencies": {
-    "discord.js": "github:discordjs/discord.js#03d3a5cdde5492433d27bbfe46afe0ebf2de5904",
+    "discord.js": "github:discordjs/discord.js#5842e35881755350764b557d66b475c2c03f249a",
     "dotenv": "10.0.0",
     "ms": "^2.1.3"
   },
