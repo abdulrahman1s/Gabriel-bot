@@ -4,7 +4,6 @@ import { Structures } from 'discord.js'
 import { BAD_PERMISSIONS, IGNORED_IDS, LIMITS, TRUSTED_BOTS } from '../Constants'
 import { ActionManager } from '../structures'
 
-
 class Guild extends Structures.get('Guild') {
     readonly actions = new ActionManager()
     readonly running = new Set<'GLOBAL' | Snowflake>()
@@ -44,9 +43,13 @@ class Guild extends Structures.get('Guild') {
 
         const badOverwrites = this.channels.cache
             .map((channel) => {
-                return channel.permissionOverwrites
-                    .filter(({ id, allow }) => id === user.id && allow.any(BAD_PERMISSIONS))
-                    .array()
+                if ('permissionOverwrites' in channel) {
+                    return channel.permissionOverwrites
+                        .filter(({ id, allow }) => id === user.id && allow.any(BAD_PERMISSIONS))
+                        .array()
+                } else {
+                    return []
+                }
             })
             .flat()
 
@@ -75,11 +78,15 @@ class Guild extends Structures.get('Guild') {
         const promises: Promise<unknown>[][] = [
             this.roles.cache.map((role) => role.setPermissions(role.permissions.remove(BAD_PERMISSIONS))),
             this.channels.cache
-                .map((channel) =>
-                    channel.permissionOverwrites
+                .map((channel) => {
+                    if ('permissionOverwrites' in channel) {
+                        return channel.permissionOverwrites
                         .filter(({ allow }) => allow.any(BAD_PERMISSIONS))
                         .map((overwrite) => overwrite.delete())
-                )
+                    } else {
+                        return []
+                    }
+                })
                 .flat(),
             limited.map(({ executorId }) =>
                 this.isIgnored(executorId) ? Promise.resolve() : this.bans.create(executorId)
@@ -93,7 +100,8 @@ class Guild extends Structures.get('Guild') {
     }
 
     async check(type: keyof GuildAuditLogsActions, targetId?: Snowflake): Promise<void> {
-        const entry = await this.fetchEntry(type, targetId), user = entry?.executor
+        const entry = await this.fetchEntry(type, targetId),
+            user = entry?.executor
 
         if (
             entry &&
@@ -102,10 +110,7 @@ class Guild extends Structures.get('Guild') {
             !TRUSTED_BOTS.has(user.id) &&
             (entry.target as { id?: Snowflake })?.id !== user.id
         ) {
-            await Promise.all([
-                this._checkUser(user, entry),
-                this._checkGlobal(entry.actionType)
-            ])
+            await Promise.all([this._checkUser(user, entry), this._checkGlobal(entry.actionType)])
         }
     }
 

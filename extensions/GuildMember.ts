@@ -2,8 +2,6 @@ import { Structures } from 'discord.js'
 
 class GuildMember extends Structures.get('GuildMember') {
     async dm(message: unknown, { times = 1 } = {}): Promise<boolean> {
-        if (typeof message !== 'string') message = String(message)
-
         let i = 0
 
         const channel = await this.createDM().catch(() => null)
