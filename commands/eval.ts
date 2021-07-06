@@ -1,7 +1,6 @@
-import { Command, Message, Util } from 'discord.js'
+import { Command, Message, Util, Formatters } from 'discord.js'
 import { inspect } from 'util'
 import { isPromise } from 'util/types'
-import { codeblock } from '../utils'
 
 export class EvalCommand implements Command {
     name = 'eval'
@@ -19,19 +18,25 @@ export class EvalCommand implements Command {
 
             if (isPromise(result)) {
                 output = await result
-                type = `Promise<${this.getType(output)}>`
+                type = `Promise<${this.kindOf(output)}>`
             } else {
                 output = result
-                type = this.getType(output)
+                type = this.kindOf(output)
             }
         } catch (error) {
             output = error
-            type = error?.name ?? this.getType(error)
+            type = error?.name ?? this.kindOf(error)
         }
 
         output = inspect(output, { depth: 0 })
+        output = Formatters.codeBlock('js', output)
+        type = Formatters.codeBlock('ts', type)
 
-        return Util.splitMessage(`\`[output]:\` ${codeblock(output)}\n\`[type]:\` ${codeblock(type, 'ts')}`, {
+        if (output.includes(message.client.token!)) {
+            return message.reply('Nope!')
+        }
+
+        return Util.splitMessage(`\`[output]\` ${output}\n\`[type]\` ${type}`, {
             char: '\n',
             maxLength: 1900
         }).map((text) => {
@@ -39,10 +44,12 @@ export class EvalCommand implements Command {
         })
     }
 
-    getType(x: unknown): string {
-        if (x === null) return 'null'
+    kindOf(x: unknown): string {
         if (typeof x === 'undefined') return 'void'
+        if (x === null) return 'null'
+        if (isPromise(x)) return 'Promise<any>'
         if (Number.isNaN(x)) return 'NaN'
+        if (Array.isArray(x)) return `${x.length === 0 ? 'never' : this.kindOf(x[0])}[]`
         return typeof x
     }
 }

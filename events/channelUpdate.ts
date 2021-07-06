@@ -13,13 +13,14 @@ export const channelUpdate = async (
 ): Promise<void> => {
     if (!('guild' in channel && 'guild' in oldChannel)) return
 
-    const addedOverwrites = channel.permissionOverwrites.filter(
-        ({ id, allow }) =>
-            !oldChannel.permissionOverwrites.has(id) && allow.any(BAD_PERMISSIONS) && !channel.guild.isIgnored(id)
-    )
+    const oldOverwrites = oldChannel.permissionOverwrites.cache
 
-    const updatedOverwrites = channel.permissionOverwrites.filter(({ id, allow }) => {
-        const oldOverwrite = oldChannel.permissionOverwrites.get(id)
+    const addedOverwrites = channel.permissionOverwrites.cache.filter(({ id, allow }) => {
+        return !oldOverwrites.has(id) && allow.any(BAD_PERMISSIONS) && !channel.guild.isIgnored(id)
+    })
+
+    const updatedOverwrites = channel.permissionOverwrites.cache.filter(({ id, allow }) => {
+        const oldOverwrite = oldOverwrites.get(id)
         if (!oldOverwrite || allow.equals(oldOverwrite.allow)) return false
         return allow.remove(oldOverwrite.allow).any(BAD_PERMISSIONS) && !channel.guild.isIgnored(id)
     })
@@ -58,7 +59,7 @@ export const channelUpdate = async (
                     if (permissions[bad]) permissions[bad] = false
                 }
 
-                return overwrite.update(permissions, `(${executor?.tag ?? 'Unknown#0000'}): DETECT BAD PERMISSIONS!`)
+                return overwrite.edit(permissions, `(${executor?.tag ?? 'Unknown#0000'}): DETECT BAD PERMISSIONS!`)
             })
         )
     }

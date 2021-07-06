@@ -13,12 +13,12 @@ const ARABIC_LETTERS_REPLACER = [
     ['ْ', ''],
     ['ّ', ''],
     ['ِ', '']
-] as const
+]
 
 export const guildUpdate = async (oldGuild: Guild, guild: Guild): Promise<void> => {
     if (guild.defaultMessageNotifications !== oldGuild.defaultMessageNotifications) {
         if (guild.defaultMessageNotifications === 'ALL_MESSAGES') {
-            return void guild.setDefaultMessageNotifications('ONLY_MENTIONS', 'All Messages? R U KIDDING ME?')
+            await guild.setDefaultMessageNotifications('ONLY_MENTIONS', 'All Messages? R U KIDDING ME?')
         }
     }
 

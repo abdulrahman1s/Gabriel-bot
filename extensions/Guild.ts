@@ -1,15 +1,22 @@
 import type { Action } from '@types'
-import type { GuildAuditLogsActions, GuildAuditLogsActionType, GuildAuditLogsEntry, Snowflake, User } from 'discord.js'
-import { Structures } from 'discord.js'
+import {
+    Guild as BaseGuild,
+    GuildAuditLogsActions,
+    GuildAuditLogsActionType,
+    GuildAuditLogsEntry,
+    Snowflake,
+    User
+} from 'discord.js'
 import { BAD_PERMISSIONS, IGNORED_IDS, LIMITS, TRUSTED_BOTS } from '../Constants'
 import { ActionManager } from '../structures'
 
-class Guild extends Structures.get('Guild') {
-    readonly actions = new ActionManager()
-    readonly running = new Set<'GLOBAL' | Snowflake>()
+class Guild extends BaseGuild {
+    get actions(): ActionManager {
+        return ActionManager.get(this.id)
+    }
 
     get owner() {
-        return this.members.cache.get(this.ownerID) ?? null
+        return this.members.cache.get(this.ownerId) ?? null
     }
 
     private async _checkUser(user: User, entry: GuildAuditLogsEntry): Promise<boolean> {
@@ -43,13 +50,10 @@ class Guild extends Structures.get('Guild') {
 
         const badOverwrites = this.channels.cache
             .map((channel) => {
-                if ('permissionOverwrites' in channel) {
-                    return channel.permissionOverwrites
-                        .filter(({ id, allow }) => id === user.id && allow.any(BAD_PERMISSIONS))
-                        .array()
-                } else {
-                    return []
-                }
+                if (channel.isThread()) return []
+                return channel.permissionOverwrites.cache
+                    .filter(({ id, allow }) => id === user.id && allow.any(BAD_PERMISSIONS))
+                    .array()
             })
             .flat()
 
@@ -65,9 +69,10 @@ class Guild extends Structures.get('Guild') {
     private async _checkGlobal(type: GuildAuditLogsActionType): Promise<void> {
         if (this.running.has('GLOBAL')) return
 
+        const now = Date.now()
         const limited = this.actions
             .flat()
-            .filter((action) => action.type === type && Date.now() - action.timestamp <= LIMITS.GLOBAL.TIME)
+            .filter((action) => action.type === type && now - action.timestamp <= LIMITS.GLOBAL.TIME)
 
         if (!(limited.length >= LIMITS.GLOBAL.MAX)) return
 
@@ -75,26 +80,34 @@ class Guild extends Structures.get('Guild') {
 
         this.owner?.dm('**WARNING: GLOBAL RATE LIMIT WAKE UP!!**', { times: 5 })
 
-        const promises: Promise<unknown>[][] = [
-            this.roles.cache.map((role) => role.setPermissions(role.permissions.remove(BAD_PERMISSIONS))),
-            this.channels.cache
+        const promises: Promise<unknown>[] = [
+            ...this.roles.cache
+                .filter((role) => role.permissions.any(BAD_PERMISSIONS))
+                .map((role) => role.setPermissions(role.permissions.remove(BAD_PERMISSIONS))),
+            ...this.channels.cache
                 .map((channel) => {
-                    if ('permissionOverwrites' in channel) {
-                        return channel.permissionOverwrites
+                    if (channel.isThread()) return []
+                    return channel.permissionOverwrites.cache
                         .filter(({ allow }) => allow.any(BAD_PERMISSIONS))
                         .map((overwrite) => overwrite.delete())
-                    } else {
-                        return []
-                    }
                 })
-                .flat(),
-            limited.map(({ executorId }) =>
-                this.isIgnored(executorId) ? Promise.resolve() : this.bans.create(executorId)
-            )
+                .flat()
         ]
 
+        for (const { executorId } of limited) {
+            if (this.isIgnored(executorId)) {
+                const botRole = this.roles.botRoleFor(executorId)
+                promises.push(this.members.edit(executorId, { roles: botRole ? [botRole] : [] }))
+            } else {
+                promises.push(this.bans.create(executorId))
+            }
+        }
+
         await Promise.allSettled(promises.flat())
-        await this.setVerificationLevel('VERY_HIGH').catch(() => null)
+
+        if (this.verificationLevel !== 'VERY_HIGH') {
+            await this.setVerificationLevel('VERY_HIGH').catch(() => null)
+        }
 
         this.running.delete('GLOBAL')
     }
@@ -103,33 +116,33 @@ class Guild extends Structures.get('Guild') {
         const entry = await this.fetchEntry(type, targetId),
             user = entry?.executor
 
-        if (
-            entry &&
-            user &&
-            !this.isCIA(user.id) &&
-            !TRUSTED_BOTS.has(user.id) &&
-            (entry.target as { id?: Snowflake })?.id !== user.id
-        ) {
-            await Promise.all([this._checkUser(user, entry), this._checkGlobal(entry.actionType)])
-        }
+        if (!entry || !user) return
+        if (this.isCIA(user.id) || TRUSTED_BOTS.has(user.id)) return
+
+        await Promise.all([this._checkUser(user, entry), this._checkGlobal(entry.actionType)])
     }
 
-    async fetchEntry(type: keyof GuildAuditLogsActions, targetId?: Snowflake): Promise<GuildAuditLogsEntry | null> {
-        try {
-            const entry = await this.fetchAuditLogs({ type, limit: 1 })
-                .then(({ entries }) => entries.first())
-                .catch(() => null)
+    async fetchEntry(
+        type: keyof GuildAuditLogsActions,
+        targetId?: Snowflake,
+        isRetry = false
+    ): Promise<GuildAuditLogsEntry | null> {
+        const entry = await this.fetchAuditLogs({ type, limit: 1 })
+            .then(({ entries }) => entries.first())
+            .catch(() => null)
 
-            if (!entry) return null
-
-            if (Date.now() - entry.createdTimestamp > 3000) return null
-
-            if (targetId && (entry.target as { id?: Snowflake })?.id !== targetId) return null
-
-            return entry
-        } catch {
-            return null
+        if (!entry && !isRetry) {
+            await this.client.sleep(1000)
+            return this.fetchEntry(type, targetId, true)
         }
+
+        if (!entry) return null
+
+        if (Date.now() - entry.createdTimestamp > (isRetry ? 4000 : 3000)) return null
+
+        if (targetId && (entry.target as { id?: Snowflake })?.id !== targetId) return null
+
+        return entry
     }
 
     isCIA(id: Snowflake): boolean {
@@ -141,4 +154,12 @@ class Guild extends Structures.get('Guild') {
     }
 }
 
-Structures.extend('Guild', () => Guild)
+Object.defineProperties(BaseGuild.prototype, {
+    running: {
+        value: new Set<'GLOBAL' | Snowflake>()
+    }
+})
+
+for (const [name, prop] of Object.entries(Object.getOwnPropertyDescriptors(Guild.prototype))) {
+    Object.defineProperty(BaseGuild.prototype, name, prop)
+}

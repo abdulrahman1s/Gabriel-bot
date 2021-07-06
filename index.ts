@@ -2,6 +2,9 @@ import { config as loadEnvFile } from 'dotenv'
 
 loadEnvFile()
 
+import './extensions/Guild'
+import './extensions/GuildMember'
+
 import { createServer } from 'http'
 import { Client, Intents } from './structures'
 
@@ -10,8 +13,6 @@ createServer((_req, res) => {
     res.end()
 }).listen(process.env.PORT ?? 8080)
 
-import './extensions/Guild'
-import './extensions/GuildMember'
 
 const client = new Client({
     intents: [
@@ -36,10 +37,10 @@ client.on('guildCreate', (guild) => void guild.members.fetch())
 
 client
     .on('channelUpdate', (channel) => {
-        if ('guild' in channel) channel.guild.check('CHANNEL_UPDATE', channel.id)
+        if (channel.type !== 'dm') channel.guild.check('CHANNEL_UPDATE', channel.id)
     })
     .on('channelDelete', (channel) => {
-        if ('guild' in channel) channel.guild.check('CHANNEL_DELETE', channel.id)
+        if (channel.type !== 'dm') channel.guild.check('CHANNEL_DELETE', channel.id)
     })
     .on('channelCreate', (channel) => channel.guild.check('CHANNEL_CREATE', channel.id))
     .on('guildBanAdd', (ban) => ban.guild.check('MEMBER_BAN_ADD'))
