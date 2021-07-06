@@ -3,7 +3,7 @@ import { BAD_PERMISSIONS } from '../Constants'
 
 export const roleUpdate = async (oldRole: Role, role: Role): Promise<void> => {
     if (role.permissions.equals(oldRole.permissions)) return
-    if (role.tags?.botID && role.guild.isIgnored(role.tags.botID)) return
+    if (role.tags?.botId && role.guild.isIgnored(role.tags.botId)) return
 
     if (!role.permissions.any(BAD_PERMISSIONS)) return
 

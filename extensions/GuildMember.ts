@@ -1,6 +1,6 @@
-import { Structures } from 'discord.js'
+import { GuildMember as BaseGuildMember } from 'discord.js'
 
-class GuildMember extends Structures.get('GuildMember') {
+class GuildMember extends BaseGuildMember {
     async dm(message: unknown, { times = 1 } = {}): Promise<boolean> {
         let i = 0
 
@@ -20,4 +20,6 @@ class GuildMember extends Structures.get('GuildMember') {
     }
 }
 
-Structures.extend('GuildMember', () => GuildMember)
+for (const [name, prop] of Object.entries(Object.getOwnPropertyDescriptors(GuildMember.prototype))) {
+    Object.defineProperty(BaseGuildMember.prototype, name, prop)
+}

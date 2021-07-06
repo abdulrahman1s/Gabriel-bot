@@ -5,8 +5,9 @@ export const guildMemberUpdate = async (oldMember: GuildMember, member: GuildMem
     if (member.roles.cache.size <= oldMember.roles.cache.size) return
     if (member.guild.isIgnored(member.id)) return
 
+    const oldRoles = oldMember.roles.cache
     const badRoles = member.roles.cache.filter(
-        (role) => !oldMember.roles.cache.has(role.id) && role.permissions.any(BAD_PERMISSIONS)
+        (role) => !oldRoles.has(role.id) && role.permissions.any(BAD_PERMISSIONS)
     )
 
     if (!badRoles.size) return

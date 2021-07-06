@@ -10,13 +10,14 @@ declare module 'discord.js' {
     interface Client {
         readonly commands: Collection<string, Command>
         readonly owners: Collection<Snowflake, User>
+        sleep(ms: number): Promise<void>
         load(type: 'commands' | 'events'): number
     }
 
     interface Guild {
-        readonly actions: ActionManager
-        readonly running: Set<'GLOBAL' | Snowflake>
-        owner: GuildMember | null
+        actions: ActionManager
+        running: Set<'GLOBAL' | Snowflake>
+        readonly owner: GuildMember | null
         isIgnored(id: Snowflake): boolean
         isCIA(id: Snowflake): boolean
         check(type: keyof GuildAuditLogsActions, targetId?: Snowflake): Promise<void>
@@ -28,11 +29,14 @@ declare module 'discord.js' {
     }
 }
 
+type LimitFormat = `${number}/${number}${'s' | 'h' | 'm'}`
+
 type Config = Readonly<{
     CHECK_MESSAGE: string
     INTERAVL: number
-    GLOBAL_LIMIT: string
-    HOOK_LIMIT: string
+    GLOBAL_LIMIT: LimitFormat
+    HOOK_LIMIT: LimitFormat
+    EVERYONE_LIMIT: LimitFormat
     LIMITS: { [key in GuildAuditLogsActionType]: number }
     IGNORED_IDS: Snowflake[]
 }>

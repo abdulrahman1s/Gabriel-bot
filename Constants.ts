@@ -1,9 +1,9 @@
-import type { TrustedBot } from '@types'
-import type { Snowflake } from 'discord.js'
-import { Collection, Permissions } from 'discord.js'
+import type { LimitFormat, TrustedBot } from '@types'
+import { Collection, Permissions, Snowflake } from 'discord.js'
 import ms from 'ms'
 import TrustedBots from './assets/trusted-bots'
 import config from './config'
+
 
 export const BAD_PERMISSIONS = [
     Permissions.FLAGS.ADMINISTRATOR,
@@ -14,19 +14,23 @@ export const BAD_PERMISSIONS = [
     Permissions.FLAGS.MANAGE_ROLES,
     Permissions.FLAGS.MANAGE_WEBHOOKS,
     Permissions.FLAGS.BAN_MEMBERS,
-    Permissions.FLAGS.KICK_MEMBERS
+    Permissions.FLAGS.KICK_MEMBERS,
+    Permissions.FLAGS.MENTION_EVERYONE
 ] as const
+
+const parseLimit = (limit: LimitFormat) => {
+    const [times, time] = limit.split('/')
+    return {
+        MAX: parseInt(times),
+        TIME: ms(time) 
+    }
+}
 
 export const LIMITS = {
     ...config.LIMITS,
-    GLOBAL: {
-        TIME: ms(config.GLOBAL_LIMIT.split('/')[1]),
-        MAX: parseInt(config.GLOBAL_LIMIT.split('/')[0])
-    },
-    HOOK: {
-        TIME: ms(config.HOOK_LIMIT.split('/')[1]),
-        MAX: parseInt(config.HOOK_LIMIT.split('/')[0])
-    }
+    GLOBAL: parseLimit(config.GLOBAL_LIMIT),
+    HOOK: parseLimit(config.HOOK_LIMIT),
+    EVERYONE: parseLimit(config.EVERYONE_LIMIT)
 } as const
 
 export const TRUSTED_BOTS = new Collection<Snowflake, TrustedBot>(TrustedBots.map((bot) => [bot.id, bot]))

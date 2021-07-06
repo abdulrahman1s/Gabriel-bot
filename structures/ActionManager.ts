@@ -2,25 +2,41 @@ import type { Action } from '@types'
 import { Collection, Snowflake } from 'discord.js'
 import config from '../config'
 
-export class ActionManager {
-    readonly cache = new Collection<Snowflake, Collection<Snowflake, Action>>()
+const store = new Map<Snowflake, ActionManager>()
 
-    add(actionInfo: Action): Collection<Snowflake, Action> {
-        const db =
-            this.cache.get(actionInfo.executorId) ??
-            this.cache.set(actionInfo.executorId, new Collection()).get(actionInfo.executorId)!
+export class ActionManager extends Collection<Snowflake, Collection<Snowflake, Action>> {
+    ensure(id: Snowflake): Collection<Snowflake, Action> {
+        return this.get(id) ?? this.set(id, new Collection()).get(id)!
+    }
 
-        db.set(actionInfo.id, actionInfo)
+    add(action: Action): Collection<Snowflake, Action> {
+        const db = this.ensure(action.executorId)
 
-        setTimeout(() => db.delete(actionInfo.id), config.INTERAVL)
+        db.set(action.id, action)
+
+        setTimeout(() => db.delete(action.id), config.INTERAVL)
 
         return db
     }
 
     flat(): Action[] {
-        return this.cache.reduce((array, actions) => {
-            array.push(...actions.values())
-            return array
-        }, <Action[]>[])
+        const actions: Action[] = []
+
+        for (const collection of this.values()) {
+            actions.push(...collection.values())
+        }
+
+        return actions
+    }
+
+    static get(id: Snowflake): ActionManager {
+        let manager = store.get(id)
+
+        if (!manager) {
+            manager = new ActionManager()
+            store.set(id, manager)
+        }
+
+        return manager
     }
 }

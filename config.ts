@@ -4,8 +4,9 @@ import ms from 'ms'
 export default <Config>{
     CHECK_MESSAGE: '\\._.',
     INTERAVL: ms('3 minutes'),
-    GLOBAL_LIMIT: '5/10s',
+    GLOBAL_LIMIT: '5/15s',
     HOOK_LIMIT: '3/5s',
+    EVERYONE_LIMIT: '3/30s',
     LIMITS: {
         DELETE: 3,
         UPDATE: 5,
