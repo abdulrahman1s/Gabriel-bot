@@ -12,17 +12,18 @@ export class ConfigCommand implements Command {
 
 	LIMITS: {
 		GLOBAL: "${botConfig.GLOBAL_LIMIT}",
-		HOOK: "${botConfig.HOOK_LIMIT}",
+		HOOK: "${botConfig.HOOK_LIMIT}", // Auto-delete if detect @everyone mention.
+		SPAM: "${botConfig.EVERYONE_LIMIT}", // @everyone and invites spam.
 		USER: {
 			DELETE: ${botConfig.LIMITS.DELETE},
 			CREATE: ${botConfig.LIMITS.CREATE},
 			UPDATE: ${botConfig.LIMITS.UPDATE}
 		}
 	},
-
-	IGNORED_IDS: [...[${botConfig.IGNORED_IDS.length} ID]],
 			
-	REMEMBER: "I'm not sleeping ._."
+	REMEMBER: "I'm not sleeping ._.",
+
+	ALSO_WATCH: "https://youtu.be/3V5KA-X9nqw" // *Recommended!*
 };`
 
         return message.reply(Formatters.codeBlock('js', config))
