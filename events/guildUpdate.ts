@@ -36,13 +36,6 @@ export const guildUpdate = async (oldGuild: Guild, guild: Guild): Promise<void> 
 
     if (isInvite(name) || BAD_WORDS.some((word) => word.test(name))) {
         await guild.setName(oldGuild.name, `(${executor?.tag ?? 'Unknown#0000'}): BAD GUILD NAME!`)
-
-        if (executor) {
-            const botRole = guild.roles.botRoleFor(executor.id)
-            await Promise.all([
-                await guild.members.edit(executor.id, { roles: botRole ? [botRole] : [] }),
-                botRole?.setPermissions(0n)
-            ])
-        }
+        if (executor) await guild.punish(executor.id)
     }
 }

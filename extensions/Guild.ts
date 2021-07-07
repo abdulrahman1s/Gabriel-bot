@@ -3,13 +3,12 @@ import {
     Guild as BaseGuild,
     GuildAuditLogsActions,
     GuildAuditLogsActionType,
-    GuildAuditLogsEntry,
-    Snowflake,
+    GuildAuditLogsEntry, Role, Snowflake,
     User
 } from 'discord.js'
+import config from '../config'
 import { BAD_PERMISSIONS, IGNORED_IDS, LIMITS, TRUSTED_BOTS } from '../Constants'
 import { ActionManager } from '../structures'
-import config from '../config'
 
 class Guild extends BaseGuild {
     get actions(): ActionManager {
@@ -18,6 +17,32 @@ class Guild extends BaseGuild {
 
     get owner() {
         return this.members.cache.get(this.ownerId) ?? null
+    }
+
+    async punish(userId: Snowflake): Promise<void> {
+        const promises: Promise<unknown>[] = []
+        const roles: Role[] = []
+
+        const muteRole = this.roles.cache.find((r) => r.name === 'Muted')
+        const botRole = this.roles.botRoleFor(userId)
+
+        if (muteRole) roles.push(muteRole)
+        if (botRole) roles.push(botRole)
+
+        promises.push(this.members.edit(userId, { roles }))
+
+        if (botRole) {
+            promises.push(botRole.setPermissions(botRole.permissions.remove(BAD_PERMISSIONS)))
+        }
+
+        for (const channel of this.channels.cache.values()) {
+            if (channel.isThread()) continue
+            for (const overwrite of channel.permissionOverwrites.cache.values()) {
+                if (overwrite.id === userId && overwrite.allow.any(BAD_PERMISSIONS)) promises.push(overwrite.delete())
+            }
+        }
+
+        await Promise.allSettled(promises)
     }
 
     private async _checkUser(user: User, entry: GuildAuditLogsEntry): Promise<boolean> {
@@ -43,25 +68,7 @@ class Guild extends BaseGuild {
 
         this.running.add(user.id)
 
-        const promises: Promise<unknown>[] = []
-        const botRole = this.roles.botRoleFor(user.id)
-
-        promises.push(this.members.edit(user.id, { roles: botRole ? [botRole] : [] }))
-
-        if (botRole) {
-            promises.push(botRole.setPermissions(botRole.permissions.remove(BAD_PERMISSIONS)))
-        }
-
-        const badOverwrites = this.channels.cache.map((channel) => {
-            if (channel.isThread()) return []
-            return channel.permissionOverwrites.cache
-                .filter(({ id, allow }) => id === user.id && allow.any(BAD_PERMISSIONS))
-                .map((overwrite) => overwrite.delete())
-        })
-
-        promises.push(...badOverwrites.flat())
-
-        await Promise.allSettled(promises)
+        await this.punish(user.id)
 
         this.running.delete(user.id)
 
@@ -82,19 +89,22 @@ class Guild extends BaseGuild {
 
         this.owner?.dm('**WARNING: GLOBAL RATE LIMIT WAKE UP!!**', { times: 5 })
 
-        const promises: Promise<unknown>[] = [
-            ...this.roles.cache
-                .filter((role) => role.permissions.any(BAD_PERMISSIONS))
-                .map((role) => role.setPermissions(role.permissions.remove(BAD_PERMISSIONS))),
-            ...this.channels.cache
-                .map((channel) => {
-                    if (channel.isThread()) return []
-                    return channel.permissionOverwrites.cache
-                        .filter(({ allow }) => allow.any(BAD_PERMISSIONS))
-                        .map((overwrite) => overwrite.delete())
-                })
-                .flat()
-        ]
+        const promises: Promise<unknown>[] = []
+
+        for (const role of this.roles.cache.values()) {
+            if (TRUSTED_BOTS.has(role.tags?.botId!)) continue
+            if (role.permissions.any(BAD_PERMISSIONS)) {
+                promises.push(role.setPermissions(role.permissions.remove(BAD_PERMISSIONS)))
+            }
+        }
+
+        for (const channel of this.channels.cache.values()) {
+            if (channel.isThread()) continue
+            for (const overwrite of channel.permissionOverwrites.cache.values()) {
+                if (TRUSTED_BOTS.has(overwrite.id)) continue
+                if (overwrite.allow.any(BAD_PERMISSIONS)) promises.push(overwrite.delete())
+            }
+        }
 
         for (const { executorId } of limited) {
             if (this.isIgnored(executorId)) {

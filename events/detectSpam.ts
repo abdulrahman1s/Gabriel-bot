@@ -32,16 +32,7 @@ export const detectSpam = async (message: Message): Promise<void> => {
             if (isWebhook) {
                 await message.fetchWebhook().then((hook) => hook.delete())
             } else {
-                const botRole = message.guild.roles.botRoleFor(id)
-                const muteRole = message.guild.roles.cache.find((r) => r.name === 'Muted')
-
-                const roles = botRole ? [botRole] : []
-
-                if (muteRole) roles.push(muteRole)
-
-                const member = message.member ?? (await message.guild.members.fetch(message.author.id))
-
-                await member.roles.set(roles)
+                await message.guild.punish(id)
 
                 const overwrites = [
                     {
@@ -56,12 +47,15 @@ export const detectSpam = async (message: Message): Promise<void> => {
                     }
                 ]
 
-                if (muteRole)
+                const muteRole = message.guild.roles.cache.find((r) => r.name === 'Muted')
+
+                if (muteRole) {
                     overwrites.push({
                         id: muteRole.id,
                         type: 'role',
                         deny: [Permissions.FLAGS.SEND_MESSAGES]
                     })
+                }
 
                 await message.channel.permissionOverwrites.set(overwrites)
 
