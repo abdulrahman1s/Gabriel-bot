@@ -4,7 +4,8 @@ export class ActionsCommand implements Command {
     name = 'actions'
     async run(message: Message, args: string[]): Promise<unknown> {
         const user =
-            message.mentions.users.first() || (await message.client.users.fetch(args[0] as Snowflake).catch(() => null))
+            message.mentions.users.filter((u) => u.id !== message.client.user!.id).first() ||
+            (await message.client.users.fetch(args[0] as Snowflake).catch(() => null))
 
         if (!user) {
             return message.reply('User not found!')
