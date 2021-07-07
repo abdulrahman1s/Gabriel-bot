@@ -33,9 +33,9 @@ class Guild extends BaseGuild {
         if (this.isIgnored(action.executorId) || this.running.has(action.executorId)) return false
 
         const now = Date.now()
-        const limited =
-            db.filter(({ type, timestamp }) => type === action.type && now - timestamp <= config.INTERAVL).size >=
-            LIMITS[action.type]
+        const limited = db.filter(({ type, timestamp }) => {
+            return type === action.type && now - timestamp <= config.INTERAVL
+        }).size >= LIMITS[action.type]
 
         if (!limited) return false
 
