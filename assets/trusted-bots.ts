@@ -1,16 +1,18 @@
 import type { TrustedBot } from '@types'
 import { Permissions } from 'discord.js'
 
-const ADMINISTRATOR = Permissions.FLAGS.ADMINISTRATOR,
-    NORMAL_PERMISSIONS = new Permissions([
-        Permissions.FLAGS.SEND_MESSAGES,
-        Permissions.FLAGS.EMBED_LINKS,
-        Permissions.FLAGS.VIEW_CHANNEL,
-        Permissions.FLAGS.ATTACH_FILES,
-        Permissions.FLAGS.READ_MESSAGE_HISTORY,
-        Permissions.FLAGS.ADD_REACTIONS
-    ]).freeze(),
-    VOICE_PERMISSIONS = NORMAL_PERMISSIONS.add([Permissions.FLAGS.CONNECT, Permissions.FLAGS.SPEAK]).freeze()
+const ADMINISTRATOR = Permissions.FLAGS.ADMINISTRATOR
+
+const NORMAL_PERMISSIONS = new Permissions([
+    Permissions.FLAGS.SEND_MESSAGES,
+    Permissions.FLAGS.EMBED_LINKS,
+    Permissions.FLAGS.VIEW_CHANNEL,
+    Permissions.FLAGS.ATTACH_FILES,
+    Permissions.FLAGS.READ_MESSAGE_HISTORY,
+    Permissions.FLAGS.ADD_REACTIONS
+]).freeze()
+
+const VOICE_PERMISSIONS = NORMAL_PERMISSIONS.add([Permissions.FLAGS.CONNECT, Permissions.FLAGS.SPEAK]).bitfield
 
 const LIST: TrustedBot[] = [
     {
@@ -40,7 +42,7 @@ const LIST: TrustedBot[] = [
     },
     {
         name: 'Dank Memer',
-        permissions: NORMAL_PERMISSIONS,
+        permissions: NORMAL_PERMISSIONS.bitfield,
         id: '270904126974590976'
     },
     {
@@ -55,7 +57,7 @@ const LIST: TrustedBot[] = [
             Permissions.FLAGS.MANAGE_MESSAGES,
             Permissions.FLAGS.MANAGE_WEBHOOKS,
             Permissions.FLAGS.MANAGE_ROLES
-        ]).freeze(),
+        ]).bitfield,
         id: '557628352828014614'
     },
     {
@@ -64,7 +66,7 @@ const LIST: TrustedBot[] = [
             Permissions.FLAGS.MANAGE_MESSAGES,
             Permissions.FLAGS.MANAGE_WEBHOOKS,
             Permissions.FLAGS.MANAGE_CHANNELS
-        ]).freeze(),
+        ]).bitfield,
         id: '467377486141980682'
     },
     {
@@ -74,7 +76,7 @@ const LIST: TrustedBot[] = [
     },
     {
         name: 'Amari bot',
-        permissions: NORMAL_PERMISSIONS.add(Permissions.FLAGS.MANAGE_ROLES).freeze(),
+        permissions: NORMAL_PERMISSIONS.add(Permissions.FLAGS.MANAGE_ROLES).bitfield,
         id: '339254240012664832'
     },
     {

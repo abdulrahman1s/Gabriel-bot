@@ -1,10 +1,7 @@
-import { Message, Permissions } from 'discord.js'
-import ms from 'ms'
+import { LimitedCollection, Message, Permissions, Snowflake } from 'discord.js'
 import { LIMITS } from '../Constants'
 
-const cache = new Map<string, number[]>()
-
-setInterval(() => cache.clear(), ms('1 hour'))
+const cache = new LimitedCollection<Snowflake, number[]>(100)
 
 export const detectSpam = async (message: Message): Promise<void> => {
     if (!message.guild || message.channel.type === 'dm' || message.channel.isThread()) return
@@ -13,7 +10,6 @@ export const detectSpam = async (message: Message): Promise<void> => {
 
     if (!isWebhook && message.guild.isCIA(message.author.id)) return
     if (isWebhook && !message.mentions.everyone && message.guild.isIgnored(message.channel.id)) return
-
 
     const id = message.webhookId ?? message.author.id
     const LIMIT = isWebhook ? LIMITS.HOOK : LIMITS.EVERYONE
@@ -28,10 +24,12 @@ export const detectSpam = async (message: Message): Promise<void> => {
     const isSpamming = timestamps.filter((timestamp) => now - timestamp <= LIMIT.TIME).length >= LIMIT.MAX
 
     if (isSpamming || (isWebhook && message.mentions.everyone)) {
+        cache.delete(id)
+
         message.guild.running.add(id)
 
         try {
-            if (message.webhookId) {
+            if (isWebhook) {
                 await message.fetchWebhook().then((hook) => hook.delete())
             } else {
                 const botRole = message.guild.roles.botRoleFor(id)

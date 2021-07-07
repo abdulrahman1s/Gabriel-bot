@@ -8,9 +8,9 @@ import './extensions/GuildMember'
 import { createServer } from 'http'
 import { Client, Intents } from './structures'
 
-createServer((_req, res) => {
-    res.write('Hello')
-    res.end()
+createServer((_, response) => {
+    response.write('Hello')
+    response.end()
 }).listen(process.env.PORT ?? 8080)
 
 
@@ -53,6 +53,6 @@ client
 void client.login(process.env.DEBUG_TOKEN || process.env.TOKEN)
 
 process
-    .on('uncaughtException', (error) => console.error(error))
-    .on('unhandledRejection', (error) => console.error(error))
-    .on('warning', (info) => console.warn(info))
+    .on('uncaughtException', (err) => console.error(err))
+    .on('unhandledRejection', (err) => console.error(err))
+    .on('warning', (err) => console.warn(err))

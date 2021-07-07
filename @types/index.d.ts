@@ -1,4 +1,4 @@
-import type { GuildAuditLogsActionType, PermissionResolvable, Snowflake } from 'discord.js'
+import type { GuildAuditLogsActionType, Snowflake } from 'discord.js'
 import type { ActionManager } from '../structures'
 
 declare module 'discord.js' {
@@ -15,7 +15,7 @@ declare module 'discord.js' {
     }
 
     interface Guild {
-        actions: ActionManager
+        readonly actions: ActionManager
         running: Set<'GLOBAL' | Snowflake>
         readonly owner: GuildMember | null
         isIgnored(id: Snowflake): boolean
@@ -51,5 +51,5 @@ type Action = {
 type TrustedBot = {
     id: Snowflake
     name: string
-    permissions: PermissionResolvable
+    permissions: bigint
 }

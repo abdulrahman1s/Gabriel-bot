@@ -1,20 +1,17 @@
 import type { Action } from '@types'
-import { Collection, Snowflake } from 'discord.js'
-import config from '../config'
+import { Collection, LimitedCollection, Snowflake } from 'discord.js'
 
 const store = new Map<Snowflake, ActionManager>()
 
-export class ActionManager extends Collection<Snowflake, Collection<Snowflake, Action>> {
-    ensure(id: Snowflake): Collection<Snowflake, Action> {
-        return this.get(id) ?? this.set(id, new Collection()).get(id)!
+export class ActionManager extends Collection<Snowflake, LimitedCollection<Snowflake, Action>> {
+    ensure(id: Snowflake): LimitedCollection<Snowflake, Action> {
+        return this.get(id) ?? this.set(id, new LimitedCollection(50)).get(id)!
     }
 
-    add(action: Action): Collection<Snowflake, Action> {
+    add(action: Action): LimitedCollection<Snowflake, Action> {
         const db = this.ensure(action.executorId)
 
         db.set(action.id, action)
-
-        setTimeout(() => db.delete(action.id), config.INTERAVL)
 
         return db
     }

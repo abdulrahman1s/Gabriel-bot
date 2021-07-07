@@ -16,12 +16,11 @@ export const guildMemberAdd = async (member: GuildMember): Promise<void> => {
     if (executor && member.guild.isIgnored(executor.id)) {
         member.guild.owner?.dm(`**${executor.tag}** Added: **${member.user.tag}**`)
     } else if (executor) {
-        await (member.user.flags?.has(UserFlags.FLAGS.VERIFIED_BOT) && member.roles.botRole
+        const flags = member.user.flags ?? (await member.user.fetchFlags())
+        await (flags.has(UserFlags.FLAGS.VERIFIED_BOT) && member.roles.botRole
             ? member.roles.botRole.setPermissions(member.roles.botRole.permissions.remove(BAD_PERMISSIONS))
-            : member.ban({
-                  reason: `(${executor?.tag ?? 'Unknown#0000'}): IDK... ask TheMaestroo`
-              }))
+            : member.ban({ reason: `(${executor?.tag ?? 'Unknown#0000'}): IDK... ask TheMaestroo` }))
     } else {
-        await member.ban({ reason: "Couldn't find who invited this bot..." })
+        await member.kick("Couldn't find who invited this bot...")
     }
 }
