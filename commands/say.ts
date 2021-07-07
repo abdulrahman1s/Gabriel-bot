@@ -6,7 +6,7 @@ export class SayCommand implements Command {
         await message.delete()
         return message.channel.send({
             content: args.join(' '),
-            files: message.attachments.array()
+            files: Array.from(message.attachments.values())
         })
     }
 }

@@ -1,7 +1,7 @@
 import type { Config } from '@types'
 import ms from 'ms'
 
-export default <Config>{
+const config: Config = {
     CHECK_MESSAGE: '\\._.',
     INTERAVL: ms('3 minutes'),
     GLOBAL_LIMIT: '5/15s',
@@ -25,3 +25,6 @@ export default <Config>{
         '814453330486100008' // #Invites-log
     ]
 }
+
+
+export default config

@@ -1,28 +1,25 @@
-import type { DMChannel, GuildChannel } from 'discord.js'
-import { Permissions } from 'discord.js'
+import { DMChannel, GuildChannel, Permissions } from 'discord.js'
 import { BAD_PERMISSIONS } from '../Constants'
 import { overwriteSerializer } from '../utils'
 
-const BAD_PERMISSIONS_STRING = new Permissions(BAD_PERMISSIONS).remove(Permissions.FLAGS.ADMINISTRATOR).toArray()
-
-BAD_PERMISSIONS_STRING.unshift('ADMINISTRATOR')
+const BAD_PERMISSIONS_STRING = new Permissions(BAD_PERMISSIONS).toArray(false)
 
 export const channelUpdate = async (
     oldChannel: GuildChannel | DMChannel,
     channel: GuildChannel | DMChannel
 ): Promise<void> => {
-    if (!('guild' in channel && 'guild' in oldChannel)) return
+    if (channel.type === 'dm' || oldChannel.type === 'dm') return
 
     const oldOverwrites = oldChannel.permissionOverwrites.cache
 
     const addedOverwrites = channel.permissionOverwrites.cache.filter(({ id, allow }) => {
-        return !oldOverwrites.has(id) && allow.any(BAD_PERMISSIONS) && !channel.guild.isIgnored(id)
+        return !oldOverwrites.has(id) && !channel.guild.isIgnored(id) && allow.any(BAD_PERMISSIONS)
     })
 
     const updatedOverwrites = channel.permissionOverwrites.cache.filter(({ id, allow }) => {
         const oldOverwrite = oldOverwrites.get(id)
         if (!oldOverwrite || allow.equals(oldOverwrite.allow)) return false
-        return allow.remove(oldOverwrite.allow).any(BAD_PERMISSIONS) && !channel.guild.isIgnored(id)
+        return !channel.guild.isIgnored(id) && allow.remove(oldOverwrite.allow).any(BAD_PERMISSIONS)
     })
 
     const auditType = addedOverwrites.size

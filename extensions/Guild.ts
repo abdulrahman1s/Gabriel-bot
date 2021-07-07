@@ -9,6 +9,7 @@ import {
 } from 'discord.js'
 import { BAD_PERMISSIONS, IGNORED_IDS, LIMITS, TRUSTED_BOTS } from '../Constants'
 import { ActionManager } from '../structures'
+import config from '../config'
 
 class Guild extends BaseGuild {
     get actions(): ActionManager {
@@ -31,11 +32,14 @@ class Guild extends BaseGuild {
 
         if (this.isIgnored(action.executorId) || this.running.has(action.executorId)) return false
 
-        const limited = db.filter(({ type }) => type === action.type).size >= LIMITS[action.type]
+        const now = Date.now()
+        const limited =
+            db.filter(({ type, timestamp }) => type === action.type && now - timestamp <= config.INTERAVL).size >=
+            LIMITS[action.type]
 
         if (!limited) return false
 
-        this.owner?.dm(`**${user.tag}** (ID: \`${user.id}\`) is limited!!\nType: \`${entry.actionType}\``)
+        this.owner?.dm(`**${user.tag}** (ID: \`${user.id}\`) is limited!!\nType: \`${action.type}\``)
 
         this.running.add(user.id)
 
@@ -48,16 +52,14 @@ class Guild extends BaseGuild {
             promises.push(botRole.setPermissions(botRole.permissions.remove(BAD_PERMISSIONS)))
         }
 
-        const badOverwrites = this.channels.cache
-            .map((channel) => {
-                if (channel.isThread()) return []
-                return channel.permissionOverwrites.cache
-                    .filter(({ id, allow }) => id === user.id && allow.any(BAD_PERMISSIONS))
-                    .array()
-            })
-            .flat()
+        const badOverwrites = this.channels.cache.map((channel) => {
+            if (channel.isThread()) return []
+            return channel.permissionOverwrites.cache
+                .filter(({ id, allow }) => id === user.id && allow.any(BAD_PERMISSIONS))
+                .map((overwrite) => overwrite.delete())
+        })
 
-        promises.push(...badOverwrites.map((overwrite) => overwrite.delete()))
+        promises.push(...badOverwrites.flat())
 
         await Promise.allSettled(promises)
 
