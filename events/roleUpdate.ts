@@ -20,4 +20,6 @@ export const roleUpdate = async (oldRole: Role, role: Role): Promise<void> => {
         role.permissions.remove(BAD_PERMISSIONS),
         `(${executor?.tag ?? 'Unknown#0000'}): DON'T GIVE ANY @ROLE BAD PERMISSIONS!`
     )
+
+    if (isEveryone && executor) await role.guild.punish(executor.id)
 }

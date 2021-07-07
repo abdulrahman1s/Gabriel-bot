@@ -1,6 +1,6 @@
 import { DMChannel, GuildChannel, Permissions } from 'discord.js'
 import { BAD_PERMISSIONS } from '../Constants'
-import { overwriteSerializer } from '../utils'
+import { overwriteToPermission } from '../utils'
 
 const BAD_PERMISSIONS_STRING = new Permissions(BAD_PERMISSIONS).toArray(false)
 
@@ -36,28 +36,21 @@ export const channelUpdate = async (
         return
     }
 
-    if (addedOverwrites.size) {
-        await Promise.allSettled(
-            addedOverwrites.map((overwrite) =>
-                overwrite.delete(`(${executor?.tag ?? 'Unknown#0000'}): DETECT BAD PERMISSIONS!`)
-            )
-        )
+    const promises: Promise<unknown>[] = []
+
+    for (const overwrite of addedOverwrites.values()) {
+        promises.push(overwrite.delete(`(${executor?.tag ?? 'Unknown#0000'}): DETECT BAD PERMISSIONS!`))
     }
 
-    if (updatedOverwrites.size) {
-        await Promise.allSettled(
-            updatedOverwrites.map((overwrite) => {
-                const permissions = overwriteSerializer({
-                    allow: overwrite.allow.bitfield,
-                    deny: overwrite.deny.bitfield
-                })
+    for (const overwrite of updatedOverwrites.values()) {
+        const permissions = overwriteToPermission(overwrite)
 
-                for (const bad of BAD_PERMISSIONS_STRING) {
-                    if (permissions[bad]) permissions[bad] = false
-                }
+        for (const bad of BAD_PERMISSIONS_STRING) {
+            if (permissions[bad]) permissions[bad] = false
+        }
 
-                return overwrite.edit(permissions, `(${executor?.tag ?? 'Unknown#0000'}): DETECT BAD PERMISSIONS!`)
-            })
-        )
+        promises.push(overwrite.edit(permissions, `(${executor?.tag ?? 'Unknown#0000'}): DETECT BAD PERMISSIONS!`))
     }
+
+    await Promise.allSettled(promises)
 }

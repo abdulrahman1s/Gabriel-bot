@@ -8,7 +8,7 @@ export const messageCreate = async (message: Message): Promise<void> => {
 
     if (message.webhookId || message.mentions.everyone || isInvite(message.content)) {
         if (message.webhookId || message.member?.permissions.any(BAD_PERMISSIONS)) {
-            return void message.client.emit('detectSpam', message)
+            message.client.emit('detectSpam', message)
         }
     }
 

@@ -18,6 +18,7 @@ declare module 'discord.js' {
         readonly actions: ActionManager
         running: Set<'GLOBAL' | Snowflake>
         readonly owner: GuildMember | null
+        punish(userId: Snowflake): Promise<void>
         isIgnored(id: Snowflake): boolean
         isCIA(id: Snowflake): boolean
         check(type: keyof GuildAuditLogsActions, targetId?: Snowflake): Promise<void>

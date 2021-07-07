@@ -1,16 +1,16 @@
 import { LimitFormat } from '@types'
-import { Permissions, PermissionString } from 'discord.js'
+import { Permissions, PermissionString, PermissionOverwrites } from 'discord.js'
 import ms from 'ms'
 
 const inviteRegExp = /(https?:\/\/)?(www\.)?(disco|discord(app)?)\.(com|gg|io|li|me|net|org)(\/invite)?\/[a-z0-9-.]+/i
 
-export const overwriteSerializer = ({ allow, deny }: { allow: bigint, deny: bigint}): Record<PermissionString, boolean> => {
+export const overwriteToPermission = (overwrite: PermissionOverwrites): Record<PermissionString, boolean> => {
     const permissions = <Record<PermissionString, boolean>>{}
 
     for (const permission of Object.keys(Permissions.FLAGS) as PermissionString[]) {
-        if (allow & Permissions.FLAGS[permission]) {
+        if (overwrite.allow.bitfield & Permissions.FLAGS[permission]) {
             permissions[permission] = true
-        } else if (deny & Permissions.FLAGS[permission]) {
+        } else if (overwrite.deny.bitfield & Permissions.FLAGS[permission]) {
             permissions[permission] = false
         }
     }
