@@ -4,7 +4,7 @@ import ms from 'ms'
 
 const filter = (user: User) => user.id !== user.client.user!.id
 const random = (max: number, min: number) => Math.floor(Math.random() * (max - min + 1) + min)
-
+const includeGay = (str?: string | null) => !!str && /gay/i.test(str)
 
 export class GayCommand implements Command {
     name = 'gay'
@@ -19,16 +19,16 @@ export class GayCommand implements Command {
 
         let gay = 0
 
-        if (Date.now() - user.createdTimestamp < ms('9 month')) {
+        if (Date.now() - user.createdTimestamp < ms('1 year')) {
             gay += random(30, 10)
         }
 
         if (!user.avatar) {
-            gay += random(20, 40)
+            gay += random(30, 50)
         }
 
         if (member) {
-            if (!user.bot && Date.now() - member.joinedTimestamp! < ms('24h')) {
+            if (!user.bot && Date.now() - member.joinedTimestamp! < ms('3d')) {
                 gay += random(15, 50)
             }
 
@@ -36,19 +36,28 @@ export class GayCommand implements Command {
                 gay += random(20, 30)
             }
 
+
             if (member.permissions.any(BAD_PERMISSIONS)) {
-                gay -= random(20, 40)
+                gay -= random(10, 15)
             }
 
             if (member.roles.cache.size <= 1) {
                 gay += random(24, 69)
             }
+
+            if (includeGay(user.username) || includeGay(member.nickname)) {
+                gay = 100
+            }
+
+            if (member.roles.cache.some((r) => includeGay(r.name))) {
+                gay = 100
+            }
         } else {
             gay = 99
         }
 
-        if (user.id === message.client.user?.id || message.client.owners.has(user.id)) {
-            gay = 0
+        if (user.id === message.client.user!.id || message.client.owners.has(user.id)) {
+            gay = 1
         }
 
         if (user.id === '282859044593598464') { // ProGay
@@ -58,6 +67,10 @@ export class GayCommand implements Command {
 
         if (gay > 100) gay = 100
         if (gay < 0) gay = 0
+
+        if (gay === 0) {
+            gay = random(1, 30)
+        }
 
         return message.channel.send(`How *gay* is ${user}??! ||**%${gay}**||`).then(() => {
             if (gay >= 100) return message.channel.send('😳 **Stop it.. Get some help!**\n\nhttps://tenor.com/view/stop-it-get-some-help-gif-7929301')
