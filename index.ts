@@ -25,6 +25,10 @@ const client = new Client({
     restTimeOffset: 0,
     presence: {
         status: 'invisible'
+    },
+    failIfNotExists: false,
+    allowedMentions: {
+        repliedUser: false
     }
 })
 

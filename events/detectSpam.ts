@@ -12,7 +12,7 @@ export const detectSpam = async (message: Message): Promise<void> => {
     if (isWebhook && !message.mentions.everyone && message.guild.isIgnored(message.channel.id)) return
 
     const id = message.webhookId ?? message.author.id
-    const LIMIT = isWebhook ? LIMITS.HOOK : LIMITS.EVERYONE
+    const LIMIT = isWebhook ? LIMITS.HOOK : LIMITS.SPAM
     const timestamps = cache.get(id) ?? cache.set(id, []).get(id)!
 
     timestamps.push(message.createdTimestamp)

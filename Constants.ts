@@ -22,7 +22,7 @@ export const LIMITS = {
     ...config.LIMITS,
     GLOBAL: parseLimit(config.GLOBAL_LIMIT),
     HOOK: parseLimit(config.HOOK_LIMIT),
-    EVERYONE: parseLimit(config.EVERYONE_LIMIT)
+    SPAM: parseLimit(config.SPAM_LIMIT)
 } as const
 
 export const TRUSTED_BOTS = new Collection<Snowflake, TrustedBot>(trustedBots.map((bot) => [bot.id, bot]))

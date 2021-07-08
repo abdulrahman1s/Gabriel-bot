@@ -7,19 +7,22 @@ export const roleUpdate = async (oldRole: Role, role: Role): Promise<void> => {
 
     if (!role.permissions.any(BAD_PERMISSIONS)) return
 
-    const { executor } = (await role.guild.fetchEntry('ROLE_UPDATE', role.id)) ?? {}
     const isEveryone = role.id === role.guild.id
+
+    const newPermissions = role.permissions.remove(BAD_PERMISSIONS)
+
+    if (isEveryone) {
+        await role.setPermissions(newPermissions, '._.')
+    }
+
+    const { executor } = (await role.guild.fetchEntry('ROLE_UPDATE', role.id)) ?? {}
 
     if (isEveryone) {
         role.guild.owner?.dm(`**${executor?.tag ?? 'Unknown#0000'}** GIVING @everyone BAD PERMISSIONS!!`)
+        if (executor) await role.guild.punish(executor.id)
     } else if (executor && role.guild.isIgnored(executor.id)) {
         return
     }
 
-    await role.setPermissions(
-        role.permissions.remove(BAD_PERMISSIONS),
-        `(${executor?.tag ?? 'Unknown#0000'}): DON'T GIVE ANY @ROLE BAD PERMISSIONS!`
-    )
-
-    if (isEveryone && executor) await role.guild.punish(executor.id)
+    await role.setPermissions(newPermissions, `(${executor?.tag ?? 'Unknown#0000'}): DON'T GIVE ANY @ROLE BAD PERMISSIONS!`)
 }

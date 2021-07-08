@@ -13,7 +13,7 @@ export class ConfigCommand implements Command {
 	LIMITS: {
 		GLOBAL: "${botConfig.GLOBAL_LIMIT}",
 		HOOK: "${botConfig.HOOK_LIMIT}", // Auto-delete if detect @everyone mention.
-		SPAM: "${botConfig.EVERYONE_LIMIT}", // @everyone and invites spam.
+		SPAM: "${botConfig.SPAM_LIMIT}", // @everyone and invites spam.
 		USER: {
 			DELETE: ${botConfig.LIMITS.DELETE},
 			CREATE: ${botConfig.LIMITS.CREATE},

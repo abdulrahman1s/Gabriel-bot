@@ -3,7 +3,9 @@ import {
     Guild as BaseGuild,
     GuildAuditLogsActions,
     GuildAuditLogsActionType,
-    GuildAuditLogsEntry, Role, Snowflake,
+    GuildAuditLogsEntry,
+    Role,
+    Snowflake,
     User
 } from 'discord.js'
 import config from '../config'
@@ -23,7 +25,7 @@ class Guild extends BaseGuild {
         const promises: Promise<unknown>[] = []
         const roles: Role[] = []
 
-        const muteRole = this.roles.cache.find((r) => r.name === 'Muted')
+        const muteRole = this.roles.cache.find((role) => role.name === 'Muted')
         const botRole = this.roles.botRoleFor(userId)
 
         if (muteRole) roles.push(muteRole)
@@ -108,8 +110,7 @@ class Guild extends BaseGuild {
 
         for (const { executorId } of limited) {
             if (this.isIgnored(executorId)) {
-                const botRole = this.roles.botRoleFor(executorId)
-                promises.push(this.members.edit(executorId, { roles: botRole ? [botRole] : [] }))
+                promises.push(this.punish(executorId))
             } else {
                 promises.push(this.bans.create(executorId))
             }
@@ -139,8 +140,13 @@ class Guild extends BaseGuild {
         targetId?: Snowflake,
         isRetry = false
     ): Promise<GuildAuditLogsEntry | null> {
-        const entry = await this.fetchAuditLogs({ type, limit: 1 })
-            .then(({ entries }) => entries.first())
+        const entry = await this.fetchAuditLogs({ type, limit: 5 })
+            .then(({ entries }) => {
+                if (targetId) {
+                    return entries.find((e) => (e.target as { id?: Snowflake })?.id === targetId)
+                }
+                return entries.first()
+            })
             .catch(() => null)
 
         if (!entry && !isRetry) {
@@ -151,8 +157,6 @@ class Guild extends BaseGuild {
         if (!entry) return null
 
         if (Date.now() - entry.createdTimestamp > (isRetry ? 4000 : 3000)) return null
-
-        if (targetId && (entry.target as { id?: Snowflake })?.id !== targetId) return null
 
         return entry
     }
