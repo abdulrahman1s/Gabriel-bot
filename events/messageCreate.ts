@@ -1,4 +1,4 @@
-import { Message } from 'discord.js'
+import type { Message } from 'discord.js'
 import config from '../config'
 import { BAD_PERMISSIONS } from '../Constants'
 import { isInvite } from '../utils'
@@ -12,7 +12,7 @@ export const messageCreate = async (message: Message): Promise<void> => {
         }
     }
 
-    if (!message.client.owners.has(message.author.id)) return
+    if (message.author.bot || !message.client.owners.has(message.author.id)) return
 
     if (message.content === config.CHECK_MESSAGE) {
         return void message.react('💯')
@@ -28,8 +28,10 @@ export const messageCreate = async (message: Message): Promise<void> => {
 
     if (!command) return
 
+    message.content = args.join(' ')
+
     try {
-        await command.run(message, args)
+        await command.run(message)
     } catch (error) {
         console.error(error)
     }

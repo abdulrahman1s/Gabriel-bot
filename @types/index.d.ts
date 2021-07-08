@@ -4,7 +4,7 @@ import type { ActionManager } from '../structures'
 declare module 'discord.js' {
     interface Command {
         name: string
-        run(message: Message, args: string[]): Awaited<void | unknown>
+        run(message: Message): Awaited<void | unknown>
     }
 
     interface Client {
@@ -37,7 +37,7 @@ type Config = Readonly<{
     INTERAVL: number
     GLOBAL_LIMIT: LimitFormat
     HOOK_LIMIT: LimitFormat
-    EVERYONE_LIMIT: LimitFormat
+    SPAM_LIMIT: LimitFormat
     LIMITS: { [key in GuildAuditLogsActionType]: number }
     IGNORED_IDS: Snowflake[]
 }>

@@ -1,11 +1,11 @@
-import { Command, Message, Util, Formatters } from 'discord.js'
+import { Command, Formatters, Message, MessageEmbed } from 'discord.js'
 import { inspect } from 'util'
-import { isPromise } from 'util/types'
+import { kindOf } from '../utils'
 
 export class EvalCommand implements Command {
     name = 'eval'
-    async run(message: Message, args: string[]): Promise<unknown> {
-        let code = args.join(' '),
+    async run(message: Message): Promise<unknown> {
+        let code = message.content,
             output = 'Empty',
             type = 'unknown'
 
@@ -16,40 +16,41 @@ export class EvalCommand implements Command {
         try {
             const result = eval(code)
 
-            if (isPromise(result)) {
+            if (kindOf(result) === 'Promise<any>') {
                 output = await result
-                type = `Promise<${this.kindOf(output)}>`
+                type = `Promise<${kindOf(output)}>`
             } else {
                 output = result
-                type = this.kindOf(output)
+                type = kindOf(output)
             }
         } catch (error) {
             output = error
-            type = error?.name ?? this.kindOf(error)
+            type = error?.name ?? kindOf(error)
         }
 
         output = inspect(output, { depth: 0 })
         output = Formatters.codeBlock('js', output)
-        type = Formatters.codeBlock('ts', type)
 
         if (output.includes(message.client.token!)) {
             return message.reply('Nope!')
         }
 
-        return Util.splitMessage(`\`[output]\` ${output}\n\`[type]\` ${type}`, {
-            char: '\n',
-            maxLength: 1900
-        }).map((text) => {
-            return message.channel.send(text)
-        })
-    }
+        if (output.length > 4000) {
+            return message.reply({
+                files: [
+                    {
+                        name: 'file.txt',
+                        attachment: Buffer.from(output)
+                    }
+                ]
+            })
+        }
 
-    kindOf(x: unknown): string {
-        if (typeof x === 'undefined') return 'void'
-        if (x === null) return 'null'
-        if (isPromise(x)) return 'Promise<any>'
-        if (Number.isNaN(x)) return 'NaN'
-        if (Array.isArray(x)) return `${x.length === 0 ? 'never' : this.kindOf(x[0])}[]`
-        return typeof x
+        const embed = new MessageEmbed()
+            .setDescription(output)
+            .setColor('#2f3136')
+            .addField('[type]', Formatters.codeBlock('ts', type))
+
+        return message.reply({ embeds: [embed] })
     }
 }
