@@ -28,8 +28,8 @@ export class EvalCommand implements Command {
             type = error?.name ?? kindOf(error)
         }
 
-        output = inspect(output, { depth: 0 })
-        output = Formatters.codeBlock('js', output)
+        output = typeof output === 'string' ? output : inspect(output, { depth: 0 })
+        output = Formatters.codeBlock('js', output.replace(/`/g, '`' + String.fromCharCode(8203)))
 
         if (output.includes(message.client.token!)) {
             return message.reply('Nope!')
