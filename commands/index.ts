@@ -1,6 +1,7 @@
 export * from './actions'
 export * from './config'
 export * from './eval'
+export * from './gay'
 export * from './ping'
 export * from './say'
 export * from './uptime'

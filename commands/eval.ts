@@ -49,7 +49,7 @@ export class EvalCommand implements Command {
         const embed = new MessageEmbed()
             .setDescription(output)
             .setColor('#2f3136')
-            .addField('[type]', Formatters.codeBlock('ts', type))
+            .addField('type', Formatters.codeBlock('ts', type))
 
         return message.reply({ embeds: [embed] })
     }
