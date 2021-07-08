@@ -1,6 +1,6 @@
 import { Command, Message, MessageEmbed, Snowflake, User } from 'discord.js'
 
-const filter = (user: User) => user.id !== user.client.user?.id
+const filter = (user: User) => user.id !== user.client.user!.id
 
 export class ActionsCommand implements Command {
     name = 'actions'
