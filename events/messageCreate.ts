@@ -4,7 +4,7 @@ import { BAD_PERMISSIONS } from '../Constants'
 import { isInvite } from '../utils'
 
 export const messageCreate = async (message: Message): Promise<void> => {
-    if (!message.guild || message.channel.type === 'dm') return
+    if (!message.guild || message.channel.type === 'DM') return
 
     if (message.webhookId || message.mentions.everyone || isInvite(message.content)) {
         if (message.webhookId || message.member?.permissions.any(BAD_PERMISSIONS)) {

@@ -8,7 +8,7 @@ export const channelUpdate = async (
     oldChannel: GuildChannel | DMChannel,
     channel: GuildChannel | DMChannel
 ): Promise<void> => {
-    if (channel.type === 'dm' || oldChannel.type === 'dm') return
+    if (channel.type === 'DM' || oldChannel.type === 'DM') return
 
     const oldOverwrites = oldChannel.permissionOverwrites.cache
 

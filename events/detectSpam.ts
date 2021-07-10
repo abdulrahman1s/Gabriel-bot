@@ -4,7 +4,7 @@ import { LIMITS } from '../Constants'
 const cache = new LimitedCollection<Snowflake, number[]>(100)
 
 export const detectSpam = async (message: Message): Promise<void> => {
-    if (!message.guild || message.channel.type === 'dm' || message.channel.isThread()) return
+    if (!message.guild || message.channel.type === 'DM' || message.channel.isThread()) return
 
     const isWebhook = !!message.webhookId
 
@@ -59,7 +59,7 @@ export const detectSpam = async (message: Message): Promise<void> => {
 
                 await message.channel.permissionOverwrites.set(overwrites)
 
-                if (message.channel.type === 'text') await message.channel.setRateLimitPerUser(15)
+                if (message.channel.type === 'GUILD_TEXT') await message.channel.setRateLimitPerUser(15)
             }
         } catch {
             /* Nothing */

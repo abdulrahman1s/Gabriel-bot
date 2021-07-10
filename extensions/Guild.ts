@@ -156,7 +156,7 @@ class Guild extends BaseGuild {
 
         if (!entry) return null
 
-        if (Date.now() - entry.createdTimestamp > (isRetry ? 4000 : 3000)) return null
+        if (Date.now() - entry.createdTimestamp > 5000) return null
 
         return entry
     }
