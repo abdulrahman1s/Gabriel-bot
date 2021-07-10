@@ -1,4 +1,4 @@
-import { Client, Team, User } from 'discord.js'
+import { Client, User } from 'discord.js'
 
 export const ready = async (client: Client): Promise<void> => {
     console.log('Connected')
@@ -8,8 +8,6 @@ export const ready = async (client: Client): Promise<void> => {
 
     if (owner instanceof User) {
         client.owners.set(owner.id, owner)
-    } else if (owner instanceof Team) {
-        for (const { user } of owner.members.values()) client.owners.set(user.id, user)
     } else {
         console.error("Couldn't find owner(s) Ids\nExit...")
         process.exit(-1)
