@@ -22,6 +22,8 @@ class Guild extends BaseGuild {
     }
 
     async punish(userId: Snowflake): Promise<void> {
+        if (this.isCIA(userId)) return
+
         const promises: Promise<unknown>[] = []
         const roles: Role[] = []
 

@@ -47,7 +47,7 @@ export const detectSpam = async (message: Message): Promise<void> => {
                     }
                 ]
 
-                const muteRole = message.guild.roles.cache.find((r) => r.name === 'Muted')
+                const muteRole = message.guild.roles.cache.find((role) => role.name === 'Muted')
 
                 if (muteRole) {
                     overwrites.push({
