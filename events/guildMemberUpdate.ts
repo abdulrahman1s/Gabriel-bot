@@ -18,8 +18,7 @@ export const guildMemberUpdate = async (oldMember: GuildMember, member: GuildMem
         return
     }
 
-    await member.roles.remove(
-        badRoles,
-        `(${executor?.tag ?? 'Unknown#0000'}): DON'T GIVE ANYONE ROLE WITH THAT PERMISSIONS!`
-    )
+    const reason = `(${executor?.tag ?? 'Unknown#0000'}): DON'T GIVE ANYONE ROLE WITH THAT PERMISSIONS!`
+
+    await member.roles.remove(badRoles, reason)
 }

@@ -15,6 +15,7 @@ declare module 'discord.js' {
     }
 
     interface Guild {
+        cleanup(type: 'channels' | 'roles' | 'bots'): Promise<PromiseSettledResult<unknown>[]>
         readonly actions: ActionManager
         running: Set<'GLOBAL' | Snowflake>
         readonly owner: GuildMember | null

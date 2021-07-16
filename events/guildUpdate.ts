@@ -16,10 +16,8 @@ const ARABIC_LETTERS_REPLACER = [
 ]
 
 export const guildUpdate = async (oldGuild: Guild, guild: Guild): Promise<void> => {
-    if (guild.defaultMessageNotifications !== oldGuild.defaultMessageNotifications) {
-        if (guild.defaultMessageNotifications === 'ALL_MESSAGES') {
-            await guild.setDefaultMessageNotifications('ONLY_MENTIONS', 'All Messages? R U KIDDING ME?')
-        }
+    if (guild.defaultMessageNotifications === 'ALL_MESSAGES') {
+        await guild.setDefaultMessageNotifications('ONLY_MENTIONS', 'All Messages? R U KIDDING ME?').catch(() => null)
     }
 
     if (guild.name === oldGuild.name) return

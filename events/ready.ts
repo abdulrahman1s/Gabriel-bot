@@ -1,10 +1,10 @@
 import { Client, User } from 'discord.js'
 
-export const ready = async (client: Client): Promise<void> => {
+export const ready = async (client: Client<true>): Promise<void> => {
     console.log('Connected')
-    console.log(client.user!.tag)
+    console.log(client.user.tag)
 
-    const { owner } = await client.application!.fetch()
+    const { owner } = await client.application.fetch()
 
     if (owner instanceof User) {
         client.owners.set(owner.id, owner)
@@ -18,7 +18,7 @@ export const ready = async (client: Client): Promise<void> => {
     const promises: Promise<unknown>[] = []
 
     for (const guild of client.guilds.cache.values()) {
-        promises.push(guild.members.fetch())
+        promises.push(guild.members.fetch({ force: true }))
     }
 
     await Promise.all(promises)

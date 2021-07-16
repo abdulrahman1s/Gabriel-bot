@@ -11,6 +11,8 @@ import {
 import config from '../config'
 import { BAD_PERMISSIONS, IGNORED_IDS, LIMITS, TRUSTED_BOTS } from '../Constants'
 import { ActionManager } from '../structures'
+import ms from 'ms'
+
 
 class Guild extends BaseGuild {
     get actions(): ActionManager {
@@ -41,8 +43,8 @@ class Guild extends BaseGuild {
 
         for (const channel of this.channels.cache.values()) {
             if (channel.isThread()) continue
-            for (const overwrite of channel.permissionOverwrites.cache.values()) {
-                if (overwrite.id === userId && overwrite.allow.any(BAD_PERMISSIONS)) promises.push(overwrite.delete())
+            for (const [id, overwrite] of channel.permissionOverwrites.cache) {
+                if (id === userId && overwrite.allow.any(BAD_PERMISSIONS)) promises.push(overwrite.delete())
             }
         }
 
@@ -95,21 +97,6 @@ class Guild extends BaseGuild {
 
         const promises: Promise<unknown>[] = []
 
-        for (const role of this.roles.cache.values()) {
-            if (TRUSTED_BOTS.has(role.tags?.botId!)) continue
-            if (role.permissions.any(BAD_PERMISSIONS)) {
-                promises.push(role.setPermissions(role.permissions.remove(BAD_PERMISSIONS)))
-            }
-        }
-
-        for (const channel of this.channels.cache.values()) {
-            if (channel.isThread()) continue
-            for (const overwrite of channel.permissionOverwrites.cache.values()) {
-                if (TRUSTED_BOTS.has(overwrite.id)) continue
-                if (overwrite.allow.any(BAD_PERMISSIONS)) promises.push(overwrite.delete())
-            }
-        }
-
         for (const { executorId } of limited) {
             if (this.isIgnored(executorId)) {
                 promises.push(this.punish(executorId))
@@ -118,6 +105,9 @@ class Guild extends BaseGuild {
             }
         }
 
+        promises.push(this.cleanup('roles'))
+        promises.push(this.cleanup('channels'))
+
         await Promise.allSettled(promises.flat())
 
         if (this.verificationLevel !== 'VERY_HIGH') {
@@ -125,6 +115,54 @@ class Guild extends BaseGuild {
         }
 
         this.running.delete('GLOBAL')
+    }
+
+    cleanup(type: 'channels' | 'roles' | 'bots') {
+        const promises: Promise<unknown>[] = []
+
+        switch (type) {
+            case 'channels': 
+                for (const channel of this.channels.cache.values()) {
+                    if (channel.isThread()) continue
+                    for (const [id, overwrite] of channel.permissionOverwrites.cache) {
+                        if (!TRUSTED_BOTS.has(id) && overwrite.allow.any(BAD_PERMISSIONS)) {
+                            promises.push(overwrite.delete())
+                        }
+                    }
+                }
+                break
+            case 'roles': 
+                for (const role of this.roles.cache.values()) {
+                    const botId = role.tags?.botId
+
+                    if (botId && TRUSTED_BOTS.has(botId)) continue
+
+                    if (role.permissions.any(BAD_PERMISSIONS)) {
+                        promises.push(role.setPermissions(role.permissions.remove(BAD_PERMISSIONS)))
+                    }
+                }
+                break
+
+            case 'bots':
+                const time = ms('3h')
+                const now = Date.now()
+                
+                const bots = this.members.cache.filter((m) => {
+                    if (!m.user.bot) return false
+                    return now - (m.joinedTimestamp ?? 0) <= time
+                })
+                
+                for (const [id, bot] of bots) {
+                    if (this.isIgnored(id)) continue
+                    promises.push(bot.kick())
+                }
+
+                break
+            default: 
+                throw new Error('Invalid cleanup type')
+        }
+
+        return Promise.allSettled(promises)
     }
 
     async check(type: keyof GuildAuditLogsActions, targetId?: Snowflake): Promise<void> {

@@ -19,7 +19,7 @@ export class Client extends DiscordClient {
             let count = 0
 
             for (const [eventName, event] of Object.entries(Events)) {
-                this.on(eventName, (...args) => (event as (...args: unknown[]) => void)(...args, this))
+                this.on(eventName, (...args) => (event as (...args: unknown[]) => void)(...args))
                 count++
             }
 
