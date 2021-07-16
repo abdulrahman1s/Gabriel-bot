@@ -4,7 +4,7 @@ class GuildMember extends BaseGuildMember {
     async dm(message: unknown, { times = 1 } = {}): Promise<boolean> {
         let i = 0
 
-        const channel = await this.createDM().catch(() => null)
+        const channel = await this.createDM(false).catch(() => null)
 
         if (!channel) return false
 

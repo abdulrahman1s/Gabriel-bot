@@ -15,14 +15,14 @@ const config: Config = {
     },
     IGNORED_IDS: [
         // Owners
-        '567399605877080071',
+        '567399605877080071', // Abdullah (OLD ACCOUNT)
+        '734484902128517141', // Abdullah
         // Administrator bots
         '831661630424743946', // Discord Bot (my bot)
         '841928041051848724', // Code Station
         // Channels
-        '764473678686978048', // #Audit-log
-        '800788335563505714', // #Mod-log
-        '814453330486100008' // #Invites-log
+        '865600188541042688', // #Audit-log
+        '865600204244910140' // #Mod-log
     ]
 }
 

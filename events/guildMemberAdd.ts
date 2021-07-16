@@ -4,9 +4,10 @@ import { BAD_PERMISSIONS, TRUSTED_BOTS } from '../Constants'
 export const guildMemberAdd = async (member: GuildMember): Promise<void> => {
     if (!member.user.bot) return
 
-    if (TRUSTED_BOTS.has(member.id)) {
-        await member.roles.botRole?.setPermissions(TRUSTED_BOTS.get(member.id)?.permissions ?? 0n)
-        return
+    const trusted = TRUSTED_BOTS.get(member.id)
+
+    if (trusted) {
+        return void member.roles.botRole?.setPermissions(trusted.permissions)
     }
 
     if (member.guild.isIgnored(member.id)) return
@@ -17,9 +18,14 @@ export const guildMemberAdd = async (member: GuildMember): Promise<void> => {
         member.guild.owner?.dm(`**${executor.tag}** Added: **${member.user.tag}**`)
     } else if (executor) {
         const flags = member.user.flags ?? (await member.user.fetchFlags())
-        await (flags.has(UserFlags.FLAGS.VERIFIED_BOT) && member.roles.botRole
-            ? member.roles.botRole.setPermissions(member.roles.botRole.permissions.remove(BAD_PERMISSIONS))
-            : member.ban({ reason: `(${executor?.tag ?? 'Unknown#0000'}): IDK... ask TheMaestroo` }))
+        const botRole = member.roles.botRole
+        const reason = `(${executor?.tag ?? 'Unknown#0000'}): IDK... ask TheMaestroo`
+
+        if (botRole && flags.has(UserFlags.FLAGS.VERIFIED_BOT)) {
+            await botRole.setPermissions(botRole.permissions.remove(BAD_PERMISSIONS), reason)
+        } else {
+            await member.ban({ reason })
+        }
     } else {
         await member.kick("Couldn't find who invited this bot...")
     }

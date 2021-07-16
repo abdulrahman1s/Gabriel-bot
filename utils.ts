@@ -49,3 +49,18 @@ export const kindOf = (x: unknown): string => {
     if (Array.isArray(x)) return `${x.length === 0 ? 'never' : kindOf(x[0])}[]`
     return typeof x
 }
+
+export const percentage = (result: PromiseSettledResult<unknown>[]): `${number}%` => {
+    if (result.length === 0) {
+        return '100%'
+    }
+
+    const success = result.filter(({ status }) => status === 'fulfilled').length
+    const output = success / result.length * 100
+
+    if (isNaN(output)) {
+        return `0%`
+    }
+
+    return `${Math.round(output)}%`
+}
