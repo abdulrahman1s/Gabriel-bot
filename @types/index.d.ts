@@ -1,4 +1,4 @@
-import type { GuildAuditLogsActionType, Snowflake } from 'discord.js'
+import type { Collection, GuildAuditLogsActionType, Snowflake } from 'discord.js'
 import type { ActionManager } from '../structures'
 
 declare module 'discord.js' {

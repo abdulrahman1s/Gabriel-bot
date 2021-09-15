@@ -37,12 +37,10 @@ export class GayCommand implements Command {
             gay = 1
         }
 
-        if (user.id === '282859044593598464') gay = 100
-
-
         if (gay > 100) gay = 100
         if (gay < 0) gay = 0
 
+        // Still gay.. lmao
         if (gay === 0) gay = random(1, 20)
         
 
