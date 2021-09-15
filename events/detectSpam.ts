@@ -1,7 +1,7 @@
 import { LimitedCollection, Message, Permissions, Snowflake } from 'discord.js'
 import { LIMITS } from '../Constants'
 
-const cache = new LimitedCollection<Snowflake, number[]>(100)
+const cache = new LimitedCollection<Snowflake, number[]>({ maxSize: 100 })
 
 export const detectSpam = async (message: Message): Promise<void> => {
     if (!message.guild || message.channel.type === 'DM' || message.channel.isThread()) return
