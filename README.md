@@ -14,6 +14,11 @@ Bad right?.. This bot is the real solution to protect your server in any case.
 - Spam Detector (Works only with users that have permissions)
 - Anti-raid that just works.
 - No Database needed (Memory Based)
+- Always being in offline status
+- Auto-Disable `ALL_MESSAGES` in guild settings
+- Checks Channel Overwrites
+- Checks Bad Role Permissions
+- No danger permission(s) to @everyone in any case
 
 
 ### 🚩 Setup
