@@ -20,6 +20,9 @@ export const roleUpdate = async (oldRole: Role, role: Role): Promise<void> => {
         role.guild.owner?.dm(`**${executor?.tag ?? 'Unknown#0000'}** GIVING @everyone BAD PERMISSIONS!!`)
         if (executor) await role.guild.punish(executor.id)
     } else if (!executor || !role.guild.isIgnored(executor.id)) {
-        await role.setPermissions(newPermissions, `(${executor?.tag ?? 'Unknown#0000'}): DON'T GIVE ANY @ROLE BAD PERMISSIONS!`)
+        await role.setPermissions(
+            newPermissions,
+            `(${executor?.tag ?? 'Unknown#0000'}): DON'T GIVE ANY @ROLE BAD PERMISSIONS!`
+        )
     }
 }

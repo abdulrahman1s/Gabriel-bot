@@ -42,10 +42,12 @@ export class GayCommand implements Command {
 
         // Still gay.. lmao
         if (gay === 0) gay = random(1, 20)
-        
 
         return message.channel.send(`How *gay* is ${user}??! ||**%${gay}**||`).then(() => {
-            if (gay >= 100) return message.channel.send('😳 **Stop it.. Get some help!**\n\nhttps://tenor.com/view/stop-it-get-some-help-gif-7929301')
+            if (gay >= 100)
+                return message.channel.send(
+                    '😳 **Stop it.. Get some help!**\n\nhttps://tenor.com/view/stop-it-get-some-help-gif-7929301'
+                )
         })
     }
 }
