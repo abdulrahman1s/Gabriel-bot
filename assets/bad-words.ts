@@ -674,4 +674,4 @@ const ENGLISH = [
     'xxx'
 ]
 
-export default ARABIC.concat(ENGLISH).map((word) => RegExp(word, 'i'))
+export default ARABIC.concat(ENGLISH).map((word) => RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'))
