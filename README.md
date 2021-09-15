@@ -31,7 +31,7 @@ npm install
 
 3. Create a file named `.env` and put the following:
 ```
-TOKEN=YOUR_DISCORD_BOT_TOKNE_HERE
+TOKEN=YOUR_DISCORD_BOT_TOKEN_HERE
 ```
 
 3. Build and Run
