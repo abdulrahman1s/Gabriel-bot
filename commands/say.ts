@@ -8,17 +8,18 @@ export class SayCommand implements Command {
         const options: MessageOptions = {
             content: message.content,
             files: Array.from(message.attachments.values()),
-            allowedMentions: { 
+            allowedMentions: {
                 parse: ['roles', 'users']
             }
         }
 
         const messageReference = message.reference?.messageId
 
-        if (messageReference) options.reply = {
-            messageReference,
-            failIfNotExists: false
-        }
+        if (messageReference)
+            options.reply = {
+                messageReference,
+                failIfNotExists: false
+            }
 
         return message.channel.send(options)
     }

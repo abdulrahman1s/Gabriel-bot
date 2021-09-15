@@ -13,7 +13,6 @@ import { BAD_PERMISSIONS, IGNORED_IDS, LIMITS, TRUSTED_BOTS } from '../Constants
 import { ActionManager } from '../structures'
 import ms from 'ms'
 
-
 class Guild extends BaseGuild {
     get actions(): ActionManager {
         return ActionManager.get(this.id)
@@ -64,9 +63,10 @@ class Guild extends BaseGuild {
         if (this.isIgnored(action.executorId) || this.running.has(action.executorId)) return false
 
         const now = Date.now()
-        const limited = db.filter(({ type, timestamp }) => {
-            return type === action.type && now - timestamp <= config.INTERAVL
-        }).size >= LIMITS[action.type]
+        const limited =
+            db.filter(({ type, timestamp }) => {
+                return type === action.type && now - timestamp <= config.INTERAVL
+            }).size >= LIMITS[action.type]
 
         if (!limited) return false
 
@@ -121,7 +121,7 @@ class Guild extends BaseGuild {
         const promises: Promise<unknown>[] = []
 
         switch (type) {
-            case 'channels': 
+            case 'channels':
                 for (const channel of this.channels.cache.values()) {
                     if (channel.isThread()) continue
                     for (const [id, overwrite] of channel.permissionOverwrites.cache) {
@@ -131,7 +131,7 @@ class Guild extends BaseGuild {
                     }
                 }
                 break
-            case 'roles': 
+            case 'roles':
                 for (const role of this.roles.cache.values()) {
                     const botId = role.tags?.botId
 
@@ -146,19 +146,19 @@ class Guild extends BaseGuild {
             case 'bots':
                 const time = ms('3h')
                 const now = Date.now()
-                
+
                 const bots = this.members.cache.filter((m) => {
                     if (!m.user.bot) return false
                     return now - (m.joinedTimestamp ?? 0) <= time
                 })
-                
+
                 for (const [id, bot] of bots) {
                     if (this.isIgnored(id)) continue
                     promises.push(bot.kick())
                 }
 
                 break
-            default: 
+            default:
                 throw new Error('Invalid cleanup type')
         }
 

@@ -23,12 +23,13 @@ export class EvalCommand implements Command {
                 output = result
                 type = kindOf(output)
             }
+
+            output = typeof output === 'string' ? output : inspect(output, { depth: 0 })
         } catch (error) {
-            output = error
-            type = error?.name ?? kindOf(error)
+            type = error instanceof Error ? error.name : kindOf(error)
+            output = typeof error === 'string' ? error : inspect(error, { depth: 0 })
         }
 
-        output = typeof output === 'string' ? output : inspect(output, { depth: 0 })
         output = Formatters.codeBlock('js', output.replace(/`/g, '`' + String.fromCharCode(8203)))
 
         if (output.includes(message.client.token!)) {
