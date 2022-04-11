@@ -1,31 +1,28 @@
 ## 🔒 The Best Protection Bot
-Never worry about your discord server again..
+The ultimate all-in-one protection discord bot you'll ever need
 
-### ❔ What's this?
-Imagine how bad it's when one of your friends hack/raid your discord server..
-Bad right?.. This bot is the real solution to protect your server in any case.
+### ❔ Description
+I had a bad friend.. he tried to raid my server
+But he failed cuz of this bot. **you need this!**
 
 
 ### ✨ Features
-- Configurable
-- Hook Spam Detector
-- Bad Guild name Detector
-- UnTrusted bots Detector
-- Spam Detector (Works only with users that have permissions)
-- Anti-raid that just works.
-- No Database needed (Memory Based)
-- Always being in offline status
-- Auto-Disable `ALL_MESSAGES` in guild settings
-- Checks Channel Overwrites
-- Checks Bad Role Permissions
-- No danger permission(s) to @everyone in any case
+- 24H in offline status
+- Smart Spam Detector
+  - Webhook Spam
+  - Users spam (works only with admins)
+- Auto disable **All Messages** notification mode
+- On eyes (things that cannot have bad permission while the bot running)
+  - `@everyone` role
+  - channel overwrites
+- Auto kick un-trusted bots
 
 
 ### 🚩 Setup
 
 1. Download & Install the required packages
 ```bash
-git clone https://github.com/TheMaestro0/Anti-raid.git
+git clone https://github.com/TheMaestro1s/Anti-raid.git
 
 cd Anti-raid
 
@@ -34,7 +31,7 @@ npm install
 
 2. Edit [`config.ts`](config.ts)
 
-3. Create a file named `.env` and put the following:
+3. Create a file named `.env` and put the following in:
 ```
 TOKEN=YOUR_DISCORD_BOT_TOKEN_HERE
 ```
@@ -45,7 +42,7 @@ npm run build
 npm run start
 ```
 
-4. 🎉 That's set!
+4. That's it!
 
 
 #### License
