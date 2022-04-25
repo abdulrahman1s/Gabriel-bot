@@ -9,13 +9,16 @@ But he failed cuz of this bot. **you need this!**
 ### ✨ Features
 - 24H in offline status
 - Smart Spam Detector
-  - Webhook Spam
+  - Webhook Spam (Fast Delete on @everyone mention)
   - Users spam (works only with admins)
 - Auto disable **All Messages** notification mode
+- Auto change server name (in case someone has changed it to bad word)
 - On eyes (things that cannot have bad permission while the bot running)
+  - server roles
   - `@everyone` role
-  - channel overwrites
-- Auto kick un-trusted bots
+  - channels overwrites
+- Auto kick non-verified bots
+- Auto reset permissions for newly joined bots
 
 
 ### 🚩 Setup
