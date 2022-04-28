@@ -2,6 +2,7 @@ import { Interaction } from 'discord.js'
 
 export const interactionCreate = async (ctx: Interaction) => {
     if (!ctx.isCommand() || !ctx.inGuild()) return
+    if (!ctx.client.owners.has(ctx.user.id)) return
     
     const command = ctx.client.commands.get(ctx.commandName)
 
