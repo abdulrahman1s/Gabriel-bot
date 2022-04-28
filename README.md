@@ -1,48 +1,79 @@
-## 🔒 The Best Protection Bot
-The ultimate all-in-one protection discord bot you'll ever need
+## The Best Protection Bot
+The ultimate all-in-one protection discord bot you'll ever need, really
 
-### ❔ Description
+#### Description
 I had a bad friend.. he tried to raid my server
 But he failed cuz of this bot. **you need this!**
 
 
 ### ✨ Features
-- 24H in offline status
-- Smart Spam Detector
-  - Webhook Spam
-  - Users spam (works only with admins)
-- Auto disable **All Messages** notification mode
-- On eyes (things that cannot have bad permission while the bot running)
+- Always offline status on
+- Smart Spam Detector (works only with webhook and admins)
+- Server Snapshots (Fix the broken things made by the hacker, something like Going back in time 🪄)
+- Things that cannot gain bad permissions while the bot running
   - `@everyone` role
-  - channel overwrites
-- Auto kick un-trusted bots
+  - any role
+  - channel overwrites 
+- **All Messages** cannot be enabled while the bot running
+- The best punishment system (what if someone has executed the limit of x?)
+  - Reset his roles
+  - Mute him for 6 hours
+  - Cleanup all channels he has permission/overwrite in
+- Only owners can add bots. (Verified bots can pass by anyone but it's permissions will be reset)
+- Red Alert Mode (fire up in case the server being under attack by multiple hackers, what this could do?)
+  - Reset All Roles Permissions
+  - Reset All Channel Overwrites
+  - Ban the suspected users
+  - Set server verification level to **Highest**
+- Detect bad server name changes (will revert it to the old name)
+  - Supported languages
+    - Arabic
+    - English
 
+### 📌 Requirements
+- Discord bot token
+- Nodejs v16.9 or newer installed
+- Git installed (Optional)
 
-### 🚩 Setup
+### 🛠️ Setup
 
-1. Download & Install the required packages
+1. Clone the repo (You could download the [zip](https://github.com/TheMaestro1s/Anti-raid/archive/refs/heads/master.zip) file and extract it instead)
 ```bash
-git clone https://github.com/TheMaestro1s/Anti-raid.git
-
-cd Anti-raid
-
-npm install
+$ git clone https://github.com/TheMaestro1s/Anti-raid.git
+$ cd Anti-raid
 ```
 
-2. Edit [`config.ts`](config.ts)
-
-3. Create a file named `.env` and put the following in:
-```
-TOKEN=YOUR_DISCORD_BOT_TOKEN_HERE
-```
-
-3. Build and Run
+2. Install the required packages
 ```bash
-npm run build
-npm run start
+$ npm install
 ```
 
-4. That's it!
+3. Rename [`env.example`](env.example) to `.env` and edit it (All options inside the file)
+
+4. Build and run
+```bash
+$ npm run build && npm run start
+```
+
+5. Star the repo or buy me a [coffee.](https://ko-fi.com/themaestro)
+
+
+### ❔ FAQs
+- Why you made this?
+  - Already answered [above](#description)
+- The bot remain in offline status
+  - Normal, acutely it's a feature
+- The bot do nothing
+  - Make sure to test it with your friend not you
+  - Move the bot role to the highest position
+  - Give the bot admin permission
+- The bot do nothing to spam messages
+  - The Spammer must be an admin or webhook, otherwise will be ignored
+- I want the feature X
+  - Open an [issue.](https://github.com/TheMaestro1s/Anti-raid/issues) and describe what the feature X does
+- I need help
+  - Open an [issue.](https://github.com/TheMaestro1s/Anti-raid/issues)
+
 
 
 #### License
