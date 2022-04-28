@@ -26,8 +26,6 @@ const client = new Client({
 console.log(`Loaded a total of ${client.loadEvents()} events.`)
 console.log(`Loaded a total of ${client.loadCommands()} commands.`)
 
-client.on('guildCreate', (guild) => void guild.members.fetch())
-
 
 client
     .on('channelUpdate', (channel) => {
