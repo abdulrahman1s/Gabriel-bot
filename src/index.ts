@@ -4,8 +4,8 @@ import { createServer } from 'http'
 import { Client, Intents } from './structures'
 import config from './config'
 
-createServer((_, response) => {
-    response.end('Pong')
+if (config.httpServer) createServer((_, res) => {
+    res.end('Pong')
 }).listen(process.env.PORT ?? 8080)
 
 

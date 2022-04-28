@@ -1,5 +1,5 @@
-## 🔒 The Best Protection Bot
-The ultimate all-in-one protection discord bot you'll ever need
+## The Best Protection Bot
+The ultimate all-in-one protection discord bot you'll ever need, really
 
 ### ❔ Description
 I had a bad friend.. he tried to raid my server
@@ -7,45 +7,55 @@ But he failed cuz of this bot. **you need this!**
 
 
 ### ✨ Features
-- 24H in offline status
-- Smart Spam Detector
-  - Webhook Spam (Fast Delete on @everyone mention)
-  - Users spam (works only with admins)
-- Auto disable **All Messages** notification mode
-- Auto change server name (in case someone has changed it to bad word)
-- On eyes (things that cannot have bad permission while the bot running)
-  - server roles
-  - `@everyone` role
-  - channels overwrites
-- Auto kick non-verified bots
-- Auto reset permissions for newly joined bots
+- Always offline status on
+- Smart Spam Detector (works only with webhook and admins)
+- Server Snapshots (Fix the broken things made by the hacker, something like Going back in time 🪄)
+- Things that cannot gain bad permissions while the bot running
+  - @everyone role
+  - any role
+  - channel overwrites 
+- **All Messages** cannot be enabled while the bot running
+- The best punishment system. (What if someone has executed the limit of x?)
+  - Reset his roles
+  - Mute him for 6 hours
+  - Cleanup all channels he has permission/overwrite in
+- Only owners can add bots. (Verified bots can pass by anyone but it's permissions will be reset)
+- Red Alert Mode (fire up in case the server being under attack by multiple hackers, what this could do?)
+  - Reset All Roles Permissions
+  - Reset All Channel Overwrites
+  - Ban the suspected users
+  - Set server verification level to **Highest**
+- Detect bad server name changes (Will revert it to the old name, current supported languages:)
+  - Arabic
+  - English
 
+### 📌 Requirements
+- Discord bot token
+- Nodejs v16.9 or newer installed
+- Git installed (Optional)
 
-### 🚩 Setup
+### 🛠️ Setup
 
-1. Download & Install the required packages
+1. Clone the repo (You could download the [zip](https://github.com/TheMaestro1s/Anti-raid/archive/refs/heads/master.zip) file and extract it instead)
 ```bash
-git clone https://github.com/TheMaestro1s/Anti-raid.git
-
-cd Anti-raid
-
-npm install
+$ git clone https://github.com/TheMaestro1s/Anti-Raid
+$ cd Anti-raid
 ```
 
-2. Edit [`config.ts`](config.ts)
+2. Install the required packages
 
-3. Create a file named `.env` and put the following in:
-```
-TOKEN=YOUR_DISCORD_BOT_TOKEN_HERE
-```
-
-3. Build and Run
 ```bash
-npm run build
-npm run start
+$ npm install
 ```
 
-4. That's it!
+3. Rename [`.env.example`](.env.example) to `.env` and edit it (More info could be found inside the file)
+
+4. Build and run
+```bash
+$ npm run build && npm run start
+```
+
+5. Star the repo or buy me a [coffee.](https://ko-fi.com/themaestro)
 
 
 #### License
