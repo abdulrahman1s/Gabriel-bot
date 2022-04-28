@@ -1,4 +1,4 @@
-import { Client as DiscordClient, Collection, Snowflake, User } from 'discord.js'
+import { Client as DiscordClient, Collection, User } from 'discord.js'
 import { Command } from '.'
 import config from '../config'
 
@@ -8,8 +8,8 @@ import * as events from '../events'
 
 export class Client extends DiscordClient {
     readonly commands = new Collection<string, Command>()
-    readonly owners = new Collection<Snowflake, User>()
-
+    readonly owners = new Collection<string, User>()
+    
     isPunishable(targetId: string): boolean {
         return !this.owners.has(targetId) && !config.ignoredIds.includes(targetId)
     }

@@ -1,10 +1,10 @@
-import { Collection, GuildAuditLogsActionType, Snowflake } from 'discord.js'
-import { ActionManager, Command } from '../src/structures'
+import { Collection, GuildAuditLogsActionType } from 'discord.js'
+import { ActionManager, Command, Snapshot } from '../src/structures'
 
 declare module 'discord.js' {
     interface Client {
         readonly commands: Collection<string, Command>
-        readonly owners: Collection<Snowflake, User>
+        readonly owners: Collection<string, User>
         isPunishable(targetId: string): boolean
         loadEvents(): number
         loadCommands(): number
@@ -12,11 +12,14 @@ declare module 'discord.js' {
 
     interface Guild {
         readonly actions: ActionManager
-        readonly running: Set<'GLOBAL' | Snowflake>
+        readonly running: Set<'GLOBAL' | string>
         readonly owner: GuildMember | null
-        punish(userId: Snowflake): Promise<void>
-        check(type: keyof GuildAuditLogsActions, targetId?: Snowflake): Promise<void>
-        fetchEntry(type: keyof GuildAuditLogsActions, targetId?: Snowflake, isRetry?: boolean): Promise<GuildAuditLogsEntry<'ALL'> | null>
+        snapshot: Snapshot
+        active: boolean
+        setup(): Promise<void>
+        punish(userId: string): Promise<void>
+        check(type: keyof GuildAuditLogsActions, targetId?: string): Promise<void>
+        fetchEntry(type: keyof GuildAuditLogsActions, targetId?: string, isRetry?: boolean): Promise<GuildAuditLogsEntry<'ALL'> | null>
     }
 
     interface GuildMember {

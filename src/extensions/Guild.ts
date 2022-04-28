@@ -1,18 +1,18 @@
-import { Guild, GuildAuditLogsActions, GuildAuditLogsEntry, Role, Snowflake } from 'discord.js'
+import { Guild, GuildAuditLogsActions, GuildAuditLogsEntry, Role, TextChannel } from 'discord.js'
 import { BAD_PERMISSIONS } from '../Constants'
-import { ActionManager, Action } from '../structures'
+import { ActionManager, Action, Snapshot } from '../structures'
 import { setTimeout as sleep } from 'timers/promises'
 import ms from 'ms'
 
 
 Guild.prototype.fetchEntry = async function (
     type: keyof GuildAuditLogsActions,
-    targetId?: Snowflake,
+    targetId?: string,
     retry = false
 ): Promise<GuildAuditLogsEntry<'ALL'> | null> {
     const entry = await this.fetchAuditLogs({ type, limit: 5 }).then(({ entries }) => {
         if (targetId) {
-            return entries.find((e) => (e.target as { id?: Snowflake })?.id === targetId)
+            return entries.find((e) => (e.target as { id?: string })?.id === targetId)
         }
         return entries.first()
     }).catch(() => null)
@@ -29,7 +29,7 @@ Guild.prototype.fetchEntry = async function (
 
 Guild.prototype.punish = async function (userId: string) {
     if (this.client.owners.has(userId)) return
-    
+
     const promises: Promise<unknown>[] = []
     const roles: Role[] = []
     const botRole = this.roles.botRoleFor(userId)
@@ -39,7 +39,7 @@ Guild.prototype.punish = async function (userId: string) {
         promises.push(botRole.setPermissions(botRole.permissions.remove(BAD_PERMISSIONS)))
     }
 
-    promises.push(this.members.edit(userId, { 
+    promises.push(this.members.edit(userId, {
         roles,
         communicationDisabledUntil: Date.now() * ms('6h')
     }))
@@ -54,7 +54,9 @@ Guild.prototype.punish = async function (userId: string) {
     await Promise.allSettled(promises)
 }
 
-Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targetId?: Snowflake) {
+Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targetId?: string) {
+    if (!this.active) return
+
     const entry = await this.fetchEntry(type, targetId), user = entry?.executor
 
     if (!user) return
@@ -83,6 +85,8 @@ Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targe
             this.running.delete(user.id)
         }
 
+        await Snapshot.restore(this)
+
         return true
     }
 
@@ -99,36 +103,54 @@ Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targe
 
         const promises: Promise<unknown>[] = []
 
-        try {
-            for (const { executorId } of result.actions) {
-                promises.push(this.bans.create(executorId))
+        for (const a of result.actions) promises.push(this.bans.create(a.executorId))
+
+        for (const channel of this.channels.cache.values()) {
+            if (channel.isThread()) continue
+            for (const overwrite of channel.permissionOverwrites.cache.values()) if (overwrite.allow.any(BAD_PERMISSIONS)) {
+                promises.push(overwrite.delete())
             }
-
-            for (const channel of this.channels.cache.values()) {
-                if (channel.isThread()) continue
-                for (const overwrite of channel.permissionOverwrites.cache.values()) {
-                    if (overwrite.allow.any(BAD_PERMISSIONS)) promises.push(overwrite.delete())
-                }
-            }
-
-            for (const role of this.roles.cache.values()) if (role.permissions.any(BAD_PERMISSIONS)) {
-                promises.push(role.setPermissions(role.permissions.remove(BAD_PERMISSIONS)))
-            }
-
-
-            if (this.verificationLevel !== 'VERY_HIGH') {
-                promises.push(this.setVerificationLevel('VERY_HIGH'))
-            }
-
-            await Promise.allSettled(promises)
-        } catch (e) {
-            console.error(e)
-        } finally {
-            this.running.delete('GLOBAL')
         }
+
+        for (const role of this.roles.cache.values()) if (role.permissions.any(BAD_PERMISSIONS)) {
+            promises.push(role.setPermissions(role.permissions.remove(BAD_PERMISSIONS)))
+        }
+
+
+        if (this.verificationLevel !== 'VERY_HIGH') {
+            promises.push(this.setVerificationLevel('VERY_HIGH'))
+        }
+
+        await Promise.allSettled(promises)
+
+        this.running.delete('GLOBAL')
+
+        await Snapshot.restore(this)
     }
 
     await local().then(global)
+}
+
+
+Guild.prototype.setup = async function () {
+    const me = this.me || await this.members.fetch(this.client.user!.id)
+
+    await this.members.fetch(this.ownerId)
+
+    const power = () => me.roles.highest.id === this.roles.highest.id && me.roles.highest.permissions.has('ADMINISTRATOR')
+
+    if (power()) {
+        this.active = true
+    } else {
+        const channel = this.channels.cache.find(c => c.type === 'GUILD_TEXT') as TextChannel
+
+        await channel?.send(`Hey <@${this.ownerId}>... \nI must have the highest role in the server with admin permissions to work properly\nYou have 2 minutes to do the requirements otherwise I'll just leave`)
+
+        setTimeout(() => {
+            if (power()) this.active = true
+            else this.leave().catch(() => null)
+        }, ms('3 minutes'))
+    }
 }
 
 

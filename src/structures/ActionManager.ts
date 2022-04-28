@@ -1,9 +1,9 @@
-import { Collection, LimitedCollection, Snowflake, GuildAuditLogsActionType, GuildAuditLogsEntry } from 'discord.js'
+import { Collection, LimitedCollection, GuildAuditLogsActionType, GuildAuditLogsEntry } from 'discord.js'
 import config from '../config'
 
 export class Action {
-    id: Snowflake
-    executorId: Snowflake
+    id: string
+    executorId: string
     timestamp: number
     type: GuildAuditLogsActionType
     constructor(opts: GuildAuditLogsEntry) {
@@ -15,7 +15,7 @@ export class Action {
 }
 
 
-export class Store extends LimitedCollection<Snowflake, Action> {
+export class Store extends LimitedCollection<string, Action> {
     scan(action: Action): boolean {
         const { max, time } = config.limits.actions[action.type.toLowerCase() as Lowercase<GuildAuditLogsActionType>]
         const now = Date.now()
@@ -24,8 +24,8 @@ export class Store extends LimitedCollection<Snowflake, Action> {
 }
 
 
-export class ActionManager extends Collection<Snowflake, Store> {
-    private static stores = new Collection<Snowflake, ActionManager>()
+export class ActionManager extends Collection<string, Store> {
+    private static stores = new Collection<string, ActionManager>()
 
     scan(type: Action['type']) {
         const { time, max } = config.limits.global
@@ -37,7 +37,7 @@ export class ActionManager extends Collection<Snowflake, Store> {
         }
     }
 
-    ensure(id: Snowflake): Store {
+    ensure(id: string): Store {
         return super.ensure(id, () => new Store({ maxSize: 50 }))
     }
 
@@ -59,7 +59,7 @@ export class ActionManager extends Collection<Snowflake, Store> {
         return actions
     }
 
-    static get(id: Snowflake): ActionManager {
+    static get(id: string): ActionManager {
         return this.stores.ensure(id, () => new ActionManager())
     }
 }
