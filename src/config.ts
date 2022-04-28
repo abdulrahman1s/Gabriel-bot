@@ -32,7 +32,8 @@ const config  = {
     },
     ignoredIds: env.get('IGNORED_IDS').default([]).asArray(),
     httpServer: env.get('HTTP_SERVER_ENABLED').default('true').asBool(),
-    directAlerts: env.get('DIRECT_MESSAGE_ALERTS').default('true').asBool()
+    directAlerts: env.get('DIRECT_MESSAGE_ALERTS').default('true').asBool(),
+    snapshots: env.get('SNAPSHOTS_ENABLED').default('true').asBool()
 }
 
 
