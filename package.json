@@ -7,7 +7,8 @@
   "main": "dist/src/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node --experimental-specifier-resolution=node dist/src/index"
+    "start": "node --experimental-specifier-resolution=node dist/src/index",
+    "start:quick": "npm run build && npm run start"
   },
   "type": "module",
   "dependencies": {

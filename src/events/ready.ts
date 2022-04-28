@@ -1,6 +1,7 @@
 import { Client, User, Team } from 'discord.js'
 import { Snapshot } from '../structures/Snapshot'
 import ms from 'ms'
+import config from '../config'
 
 export const ready = async (client: Client<true>): Promise<void> => {
     console.log('Connected')
@@ -31,10 +32,15 @@ export const ready = async (client: Client<true>): Promise<void> => {
 
     await Promise.all(promises)
 
-    setInterval(() => client.guilds.cache.each(async (guild) => {
-        if (!guild.active) return
-        guild.snapshot = await Snapshot.take(guild)
-    }), ms('1h'))
+    if (config.snapshots) {
+        const takeSnapshots = () => client.guilds.cache.each(async (guild) => {
+            if (!guild.active) return
+            guild.snapshot = await Snapshot.take(guild)
+        })
+
+        takeSnapshots()
+        setInterval(takeSnapshots, ms('1h'))
+    }
 
     console.log('Everything fine...')
     console.log('Notice: The bot will remain in offline status.. thats normal')

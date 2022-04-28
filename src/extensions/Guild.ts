@@ -3,6 +3,7 @@ import { BAD_PERMISSIONS } from '../Constants'
 import { ActionManager, Action, Snapshot } from '../structures'
 import { setTimeout as sleep } from 'timers/promises'
 import ms from 'ms'
+import config from '../config'
 
 
 Guild.prototype.fetchEntry = async function (
@@ -59,11 +60,9 @@ Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targe
 
     const entry = await this.fetchEntry(type, targetId), user = entry?.executor
 
-    if (!user) return
+    if (!user || this.client.owners.has(user.id)) return
 
     const local = async () => {
-        if (this.client.owners.has(user.id)) return
-
         while (this.running.has(user.id)) await sleep(50)
 
         const action = new Action(entry)
@@ -85,7 +84,7 @@ Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targe
             this.running.delete(user.id)
         }
 
-        await Snapshot.restore(this)
+        if (config.snapshots) await Snapshot.restore(this)
 
         return true
     }
@@ -125,7 +124,7 @@ Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targe
 
         this.running.delete('GLOBAL')
 
-        await Snapshot.restore(this)
+        if (config.snapshots) await Snapshot.restore(this)
     }
 
     await local().then(global)
