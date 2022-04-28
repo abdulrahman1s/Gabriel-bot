@@ -6,6 +6,6 @@ export class Uptime implements Command {
     description = 'Shows bot uptime'
     async run(ctx: CTX): Promise<void> {
         const uptime = ms(ctx.client.uptime!, { long: true })
-        await ctx.reply(`Uptime: **${uptime}**`)
+        await ctx.reply({ content: `Uptime: **${uptime}**`, ephemeral: true })
     }
 }

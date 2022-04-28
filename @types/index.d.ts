@@ -12,7 +12,7 @@ declare module 'discord.js' {
 
     interface Guild {
         readonly actions: ActionManager
-        running: Set<'GLOBAL' | Snowflake>
+        readonly running: Set<'GLOBAL' | Snowflake>
         readonly owner: GuildMember | null
         punish(userId: Snowflake): Promise<void>
         check(type: keyof GuildAuditLogsActions, targetId?: Snowflake): Promise<void>
@@ -20,6 +20,6 @@ declare module 'discord.js' {
     }
 
     interface GuildMember {
-        dm(message: unknown, times?: number): Promise<boolean>
+        dm(content: string, times?: number): Promise<boolean>
     }
 }

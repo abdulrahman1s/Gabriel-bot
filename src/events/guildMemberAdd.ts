@@ -15,7 +15,7 @@ export const guildMemberAdd = async (member: GuildMember): Promise<void> => {
         if (botRole && flags.has(UserFlags.FLAGS.VERIFIED_BOT)) {
             await botRole.setPermissions(botRole.permissions.remove(BAD_PERMISSIONS))
         } else {
-            await member.ban({ reason: `(${executor.tag}): Ask the owners to add this bot` })
+            await member.kick(`(${executor.tag}): Ask the owners to add this bot` )
         }
     } else {
         await member.kick("Couldn't find who invited this bot...")

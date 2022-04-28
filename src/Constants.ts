@@ -1,5 +1,4 @@
 import { Permissions } from 'discord.js'
-import badWords from '../assets/bad-words.json'
 
 export const BAD_PERMISSIONS = [
     Permissions.FLAGS.ADMINISTRATOR,
@@ -11,7 +10,8 @@ export const BAD_PERMISSIONS = [
     Permissions.FLAGS.MANAGE_WEBHOOKS,
     Permissions.FLAGS.BAN_MEMBERS,
     Permissions.FLAGS.KICK_MEMBERS,
-    Permissions.FLAGS.MENTION_EVERYONE
+    Permissions.FLAGS.MENTION_EVERYONE,
+    Permissions.FLAGS.MUTE_MEMBERS
 ] as const
 
-export const BAD_WORDS = badWords.sort()
+export { default as BAD_WORDS } from '../assets/bad-words'

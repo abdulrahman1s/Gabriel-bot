@@ -1,6 +1,9 @@
 import { GuildMember } from 'discord.js'
+import config from '../config'
 
-GuildMember.prototype.dm = async function (message: unknown, times = 1) {
+GuildMember.prototype.dm = async function (content: string, times = 1) {
+    if (!config.directAlerts) return false
+
     let i = 0
 
     const channel = await this.createDM(false).catch(() => null)
@@ -9,7 +12,7 @@ GuildMember.prototype.dm = async function (message: unknown, times = 1) {
 
     while (i++ < times) {
         try {
-            await channel.send(String(message))
+            await channel.send(content)
         } catch {
             return false
         }

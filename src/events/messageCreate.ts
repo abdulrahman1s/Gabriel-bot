@@ -1,9 +1,15 @@
-import { Message, LimitedCollection } from 'discord.js'
+import { Message, LimitedCollection, GuildTextBasedChannel } from 'discord.js'
 import { BAD_PERMISSIONS } from '../Constants'
-import { isInvite } from '../utils'
+import { setTimeout as sleep } from 'timers/promises'
 import config from '../config'
 
 const spam = new LimitedCollection<string, number[]>({ maxSize: 100 })
+const TIMEOUT_BEFORE_DELETE = 1000
+
+const cleanup = async (channel: GuildTextBasedChannel, filterFn: (m: Message) => boolean) => {
+    await sleep(TIMEOUT_BEFORE_DELETE)
+    await channel.bulkDelete(channel.messages.cache.filter(filterFn))
+}
 
 const handleSpam = async (msg: Message<true>) => {
     if (msg.channel.isThread()) return
@@ -12,7 +18,6 @@ const handleSpam = async (msg: Message<true>) => {
     const timestamps = spam.ensure(id, () => [])
 
     timestamps.push(msg.createdTimestamp)
-
 
     const now = Date.now()
     const isSpamming = timestamps.filter((stamp) => now - stamp <= config.limits.messages.user.time).length >= config.limits.messages.user.max
@@ -26,9 +31,7 @@ const handleSpam = async (msg: Message<true>) => {
     try {
         await msg.guild.punish(id)
 
-        const spamMessages = msg.channel.messages.cache.filter(m => m.webhookId === id)
-
-        await msg.channel.bulkDelete(spamMessages)
+        await cleanup(msg.channel, m => m.author.id === id)
 
         if (msg.channel.type === 'GUILD_TEXT') await msg.channel.setRateLimitPerUser(5)
     } catch {
@@ -48,7 +51,7 @@ const handleWebhookSpam = async (msg: Message<true>) => {
     const now = Date.now()
     const isSpamming = timestamps.filter((stamp) => now - stamp <= config.limits.messages.hook.time).length >= config.limits.messages.hook.max
 
-    if (!(isSpamming || msg.mentions.everyone)) return
+    if (!isSpamming && !msg.mentions.everyone) return
 
     msg.guild.running.add(id)
 
@@ -59,9 +62,7 @@ const handleWebhookSpam = async (msg: Message<true>) => {
 
         await hook.delete()
 
-        const spamMessages = msg.channel.messages.cache.filter(m => m.webhookId === id)
-
-        await msg.channel.bulkDelete(spamMessages)
+        await cleanup(msg.channel, m => m.webhookId === id)
     } catch {
         /* Ignore */
     } finally {
@@ -73,7 +74,6 @@ export const messageCreate = async (message: Message): Promise<void> => {
     if (!message.inGuild()) return
     if (message.guild.running.has(message.webhookId || message.author.id)) return
     if (message.webhookId) return handleWebhookSpam(message)
-    if ((message.mentions.everyone || isInvite(message.content)) && message.member?.permissions.any(BAD_PERMISSIONS)) {
-        return handleSpam(message)
-    }
+    const member = message.member || await message.guild.members.fetch(message.author.id)
+    if (message.client.isPunishable(message.author.id) && member.permissions.any(BAD_PERMISSIONS)) return handleSpam(message)
 }
