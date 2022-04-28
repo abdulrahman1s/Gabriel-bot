@@ -1,26 +1,30 @@
 import { Collection, Guild, GuildChannelTypes, GuildEditData, OverwriteData } from 'discord.js'
 
-interface RoleSnapshot {
-    name: string
-    color: number
-    permissions: bigint
-    hoist: boolean
-    mentionable: boolean
+namespace Snapshot {
+    export interface Role {
+        name: string
+        color: number
+        permissions: bigint
+        hoist: boolean
+        mentionable: boolean
+    }
+    
+    export interface Emoji {
+        name: string
+        url: string
+    }
+    
+    export interface Channel {
+        name: string
+        type: GuildChannelTypes
+        position: number
+        overwrites: OverwriteData[]
+        parent?: string
+        children: Collection<string, (Omit<Channel, 'children'>)>
+    }
 }
 
-interface EmojiSnapshot {
-    name: string
-    url: string
-}
 
-interface ChannelSnapshot {
-    name: string
-    type: GuildChannelTypes
-    position: number
-    overwrites: OverwriteData[]
-    parent?: string
-    children: Collection<string, (Omit<ChannelSnapshot, 'children'>)>
-}
 
 
 export class Snapshot {
@@ -28,9 +32,9 @@ export class Snapshot {
     icon: string | null = null
     banner: string | null = null
     description: string | null = null
-    readonly roles = new Collection<string, RoleSnapshot>()
-    readonly channels = new Collection<string, ChannelSnapshot>()
-    readonly emojis = new Collection<string, EmojiSnapshot>()
+    readonly roles = new Collection<string, Snapshot.Role>()
+    readonly channels = new Collection<string, Snapshot.Channel>()
+    readonly emojis = new Collection<string, Snapshot.Emoji>()
     readonly createdTimestamp = Date.now()
 
     static async take(guild: Guild): Promise<Snapshot> {
@@ -43,7 +47,7 @@ export class Snapshot {
         for (const [id, channel] of guild.channels.cache) {
             if (channel.isThread()) continue
 
-            const channelShot: ChannelSnapshot = {
+            const channelShot: Snapshot.Channel = {
                 name: channel.name,
                 type: channel.type,
                 position: channel.position,
@@ -66,7 +70,7 @@ export class Snapshot {
         for (const [id, role] of guild.roles.cache.sort((a, b) => b.position - a.position)) {
             if (role.id === guild.id || role.managed) continue
 
-            const roleShot: RoleSnapshot = {
+            const roleShot: Snapshot.Role = {
                 name: role.name,
                 color: role.color,
                 permissions: role.permissions.bitfield,
@@ -78,7 +82,7 @@ export class Snapshot {
         }
 
         for (const [id, emoji] of guild.emojis.cache) {
-            const emojiShot: EmojiSnapshot = {
+            const emojiShot: Snapshot.Emoji = {
                 name: emoji.name!,
                 url: emoji.url
             }
