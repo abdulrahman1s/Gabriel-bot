@@ -11,11 +11,11 @@ But he failed cuz of this bot. **you need this!**
 - Smart Spam Detector (works only with webhook and admins)
 - Server Snapshots (Fix the broken things made by the hacker, something like Going back in time 🪄)
 - Things that cannot gain bad permissions while the bot running
-  - @everyone role
+  - `@everyone` role
   - any role
   - channel overwrites 
 - **All Messages** cannot be enabled while the bot running
-- The best punishment system (What if someone has executed the limit of x?)
+- The best punishment system (what if someone has executed the limit of x?)
   - Reset his roles
   - Mute him for 6 hours
   - Cleanup all channels he has permission/overwrite in
@@ -25,9 +25,10 @@ But he failed cuz of this bot. **you need this!**
   - Reset All Channel Overwrites
   - Ban the suspected users
   - Set server verification level to **Highest**
-- Detect bad server name changes (Will revert it to the old name, current supported languages:)
-  - Arabic
-  - English
+- Detect bad server name changes (will revert it to the old name)
+  - Supported languages
+    - Arabic
+    - English
 
 ### 📌 Requirements
 - Discord bot token
@@ -38,7 +39,7 @@ But he failed cuz of this bot. **you need this!**
 
 1. Clone the repo (You could download the [zip](https://github.com/TheMaestro1s/Anti-raid/archive/refs/heads/master.zip) file and extract it instead)
 ```bash
-$ git clone https://github.com/TheMaestro1s/Anti-Raid
+$ git clone https://github.com/TheMaestro1s/Anti-raid.git
 $ cd Anti-raid
 ```
 
