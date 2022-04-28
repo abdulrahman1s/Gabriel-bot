@@ -1,6 +1,2 @@
-// export * from './actions'
-// export * from './clear'
-// export * from './config'
-// export * from './eval'
 export * from './ping'
 export * from './uptime'
