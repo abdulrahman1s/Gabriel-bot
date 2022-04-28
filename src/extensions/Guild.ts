@@ -128,7 +128,7 @@ Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targe
         }
     }
 
-    await Promise.allSettled([local(), global()])
+    await local().then(global)
 }
 
 
