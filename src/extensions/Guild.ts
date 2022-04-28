@@ -1,4 +1,4 @@
-import { Guild, GuildAuditLogsActions, GuildAuditLogsEntry, Role, TextChannel } from 'discord.js'
+import { Guild, GuildAuditLogsActions, GuildAuditLogsEntry, Role, TextChannel, Permissions } from 'discord.js'
 import { BAD_PERMISSIONS } from '../Constants'
 import { ActionManager, Action, Snapshot } from '../structures'
 import { setTimeout as sleep } from 'timers/promises'
@@ -136,19 +136,19 @@ Guild.prototype.setup = async function () {
 
     await this.members.fetch(this.ownerId)
 
-    const power = () => me.roles.highest.id === this.roles.highest.id && me.roles.highest.permissions.has('ADMINISTRATOR')
+    const power = () => me.roles.highest.id === this.roles.highest.id && me.roles.highest.permissions.has(Permissions.FLAGS.ADMINISTRATOR)
 
     if (power()) {
         this.active = true
     } else {
-        const channel = this.channels.cache.find(c => c.type === 'GUILD_TEXT') as TextChannel
+        const channel = this.channels.cache.find(c => c.type === 'GUILD_TEXT' && c.permissionsFor(me).has(Permissions.FLAGS.SEND_MESSAGES)) as TextChannel
 
         await channel?.send(`Hey <@${this.ownerId}>... \nI must have the highest role in the server with admin permissions to work properly\nYou have 2 minutes to do the requirements otherwise I'll just leave`)
 
         setTimeout(() => {
             if (power()) this.active = true
             else this.leave().catch(() => null)
-        }, ms('3 minutes'))
+        }, ms('2 minutes'))
     }
 }
 
