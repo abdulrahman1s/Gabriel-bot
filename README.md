@@ -1,7 +1,7 @@
 ## The Best Protection Bot
 The ultimate all-in-one protection discord bot you'll ever need, really
 
-### ❔ Description
+#### Description
 I had a bad friend.. he tried to raid my server
 But he failed cuz of this bot. **you need this!**
 
@@ -15,7 +15,7 @@ But he failed cuz of this bot. **you need this!**
   - any role
   - channel overwrites 
 - **All Messages** cannot be enabled while the bot running
-- The best punishment system. (What if someone has executed the limit of x?)
+- The best punishment system (What if someone has executed the limit of x?)
   - Reset his roles
   - Mute him for 6 hours
   - Cleanup all channels he has permission/overwrite in
@@ -43,12 +43,11 @@ $ cd Anti-raid
 ```
 
 2. Install the required packages
-
 ```bash
 $ npm install
 ```
 
-3. Rename [`.env.example`](.env.example) to `.env` and edit it (More info could be found inside the file)
+3. Rename [`env.example`](env.example) to `.env` and edit it (All options inside the file)
 
 4. Build and run
 ```bash
@@ -56,6 +55,24 @@ $ npm run build && npm run start
 ```
 
 5. Star the repo or buy me a [coffee.](https://ko-fi.com/themaestro)
+
+
+### ❔ FAQs
+- Why you made this?
+  - Already answered [above](#description)
+- The bot remain in offline status
+  - Normal, acutely it's a feature
+- The bot do nothing
+  - Make sure to test it with your friend not you
+  - Move the bot role to the highest position
+  - Give the bot admin permission
+- The bot do nothing to spam messages
+  - The Spammer must be an admin or webhook, otherwise will be ignored
+- I want the feature X
+  - Open an [issue.](https://github.com/TheMaestro1s/Anti-raid/issues) and describe what the feature X does
+- I need help
+  - Open an [issue.](https://github.com/TheMaestro1s/Anti-raid/issues)
+
 
 
 #### License
