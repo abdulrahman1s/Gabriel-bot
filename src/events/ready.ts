@@ -19,10 +19,7 @@ export const ready = async (client: Client<true>): Promise<void> => {
 
     client.owners.set(client.user.id, client.user)
 
-    await app.commands.set(client.commands.map(cmd => {
-        cmd.defaultPermission = false
-        return cmd
-    }))
+    await app.commands.set(client.commands.toJSON())
 
     console.log('Deployed the commands.')
 

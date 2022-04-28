@@ -60,6 +60,6 @@ export class ActionManager extends Collection<Snowflake, Store> {
     }
 
     static get(id: Snowflake): ActionManager {
-        return ActionManager.stores.ensure(id, () => new ActionManager())
+        return this.stores.ensure(id, () => new ActionManager())
     }
 }
