@@ -23,7 +23,7 @@ Guild.prototype.fetchEntry = async function (
         return this.fetchEntry(type, targetId, true)
     }
 
-    if (!entry || Date.now() - entry.createdTimestamp > 5000) return null
+    if (!entry?.executor || Date.now() - entry.createdTimestamp > 5000) return null
 
     return entry as GuildAuditLogsEntry<'ALL'>
 }
@@ -79,7 +79,6 @@ Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targe
             await this.punish(user.id)
         } catch (e) {
             console.error(e)
-            // Ignore
         } finally {
             this.running.delete(user.id)
         }

@@ -12,6 +12,6 @@ export const BAD_PERMISSIONS = [
     Permissions.FLAGS.KICK_MEMBERS,
     Permissions.FLAGS.MENTION_EVERYONE,
     Permissions.FLAGS.MUTE_MEMBERS
-] as const
+]
 
 export { default as BAD_WORDS } from '../assets/bad-words'

@@ -8,12 +8,15 @@ export const guildMemberAdd = async (member: GuildMember): Promise<void> => {
 
     if (executor && !member.client.isPunishable(executor.id)) {
         member.guild.owner?.dm(`**${executor.tag}** Added: **${member.user.tag}**`)
-    } else if (executor) {
+    } 
+    
+    if (executor) {
         const flags = await member.user.fetchFlags(false), botRole = member.roles.botRole
 
         // Verified bots can pass the test but without permissions
         if (botRole && flags.has(UserFlags.FLAGS.VERIFIED_BOT)) {
             await botRole.setPermissions(botRole.permissions.remove(BAD_PERMISSIONS))
+            member.guild.owner?.dm(`**${executor.tag}** Added: **${member.user.tag}**`)
         } else {
             await member.kick(`(${executor.tag}): Ask the owners to add this bot` )
         }
