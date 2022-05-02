@@ -44,50 +44,50 @@ export class Snapshot {
         shot.description = guild.description
         shot.banner = guild.banner
 
-        for (const [id, channel] of guild.channels.cache) {
-            if (channel.isThread()) continue
+        for (const [id, c] of guild.channels.cache) {
+            if (c.isThread()) continue
 
-            const channelShot: Snapshot.Channel = {
-                name: channel.name,
-                type: channel.type,
-                position: channel.position,
-                overwrites: channel.permissionOverwrites.cache.toJSON(),
-                children: channel.type === 'GUILD_CATEGORY' ? channel.children.mapValues((child) => {
+            const channel: Snapshot.Channel = {
+                name: c.name,
+                type: c.type,
+                position: c.position,
+                overwrites: c.permissionOverwrites.cache.toJSON(),
+                children: c.type === 'GUILD_CATEGORY' ? c.children.mapValues((child) => {
                     return {
                         name: child.name,
                         type: child.type,
                         position: child.position,
                         overwrites: child.permissionOverwrites.cache.toJSON(),
-                        parent: channel.id
+                        parent: c.id
                     }
                 }) : new Collection(),
-                parent: channel.parentId || void 0
+                parent: c.parentId || void 0
             }
 
-            shot.channels.set(id, channelShot)
+            shot.channels.set(id, channel)
         }
 
-        for (const [id, role] of guild.roles.cache.sort((a, b) => b.position - a.position)) {
-            if (role.id === guild.id || role.managed) continue
+        for (const [id, r] of guild.roles.cache.sort((a, b) => b.position - a.position)) {
+            if (r.id === guild.id || r.managed) continue
 
-            const roleShot: Snapshot.Role = {
-                name: role.name,
-                color: role.color,
-                permissions: role.permissions.bitfield,
-                hoist: role.hoist,
-                mentionable: role.mentionable
+            const role: Snapshot.Role = {
+                name: r.name,
+                color: r.color,
+                permissions: r.permissions.bitfield,
+                hoist: r.hoist,
+                mentionable: r.mentionable
             }
 
-            shot.roles.set(id, roleShot)
+            shot.roles.set(id, role)
         }
 
-        for (const [id, emoji] of guild.emojis.cache) {
-            const emojiShot: Snapshot.Emoji = {
-                name: emoji.name!,
-                url: emoji.url
+        for (const [id, e] of guild.emojis.cache) {
+            const emoji: Snapshot.Emoji = {
+                name: e.name!,
+                url: e.url
             }
-
-            shot.emojis.set(id, emojiShot)
+            
+            shot.emojis.set(id, emoji)
         }
 
 
