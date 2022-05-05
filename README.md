@@ -55,7 +55,7 @@ $ npm install
 $ npm run build && npm run start
 ```
 
-5. Star the repo or buy me a [coffee.](https://ko-fi.com/themaestro)
+5. Star the repo or buy me a [coffee.](https://ko-fi.com/abdulrahman1s)
 
 
 ### ❔ FAQs
