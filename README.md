@@ -37,9 +37,9 @@ But he failed cuz of this bot. **you need this!**
 
 ### 🛠️ Setup
 
-1. Clone the repo (You could download the [zip](https://github.com/TheMaestro1s/Anti-raid/archive/refs/heads/master.zip) file and extract it instead)
+1. Clone the repo (You could download the [zip](https://github.com/abdulrahman1s/Anti-raid/archive/refs/heads/master.zip) file and extract it instead)
 ```bash
-$ git clone https://github.com/TheMaestro1s/Anti-raid.git
+$ git clone https://github.com/abdulrahman1s/Anti-raid.git
 $ cd Anti-raid
 ```
 
@@ -70,9 +70,9 @@ $ npm run build && npm run start
 - The bot do nothing to spam messages
   - The Spammer must be an admin or webhook, otherwise will be ignored
 - I want the feature X
-  - Open an [issue.](https://github.com/TheMaestro1s/Anti-raid/issues) and describe what the feature X does
+  - Open an [issue.](https://github.com/abdulrahman1s/Anti-raid/issues) and describe what the feature X does
 - I need help
-  - Open an [issue.](https://github.com/TheMaestro1s/Anti-raid/issues)
+  - Open an [issue.](https://github.com/abdulrahman1s/Anti-raid/issues)
 
 
 
