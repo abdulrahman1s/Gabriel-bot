@@ -33,9 +33,9 @@ export const ready = async (client: Client<true>): Promise<void> => {
     await Promise.all(promises)
 
     if (config.snapshots) {
-        const takeSnapshots = () => client.guilds.cache.each(async (guild) => {
+        const takeSnapshots = () => client.guilds.cache.each((guild) => {
             if (!guild.active) return
-            guild.snapshot = await Snapshot.take(guild)
+            guild.snapshot = new Snapshot(guild)
         })
 
         takeSnapshots()
