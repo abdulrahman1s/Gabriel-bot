@@ -8,12 +8,12 @@ namespace Snapshot {
         hoist: boolean
         mentionable: boolean
     }
-    
+
     export interface Emoji {
         name: string
         url: string
     }
-    
+
     export interface Channel {
         name: string
         type: GuildChannelTypes
@@ -37,12 +37,11 @@ export class Snapshot {
     readonly emojis = new Collection<string, Snapshot.Emoji>()
     readonly createdTimestamp = Date.now()
 
-    static async take(guild: Guild): Promise<Snapshot> {
-        const shot = new Snapshot()
-
-        shot.name = guild.name
-        shot.description = guild.description
-        shot.banner = guild.banner
+    constructor(guild: Guild) {
+        this.name = guild.name
+        this.description = guild.description
+        this.banner = guild.bannerURL()
+        this.icon = guild.iconURL()
 
         for (const [id, c] of guild.channels.cache) {
             if (c.isThread()) continue
@@ -64,7 +63,7 @@ export class Snapshot {
                 parent: c.parentId || void 0
             }
 
-            shot.channels.set(id, channel)
+            this.channels.set(id, channel)
         }
 
         for (const [id, r] of guild.roles.cache.sort((a, b) => b.position - a.position)) {
@@ -78,7 +77,7 @@ export class Snapshot {
                 mentionable: r.mentionable
             }
 
-            shot.roles.set(id, role)
+            this.roles.set(id, role)
         }
 
         for (const [id, e] of guild.emojis.cache) {
@@ -86,12 +85,9 @@ export class Snapshot {
                 name: e.name!,
                 url: e.url
             }
-            
-            shot.emojis.set(id, emoji)
+
+            this.emojis.set(id, emoji)
         }
-
-
-        return shot
     }
 
     static async restore(guild: Guild): Promise<void> {
@@ -104,8 +100,8 @@ export class Snapshot {
 
         if (shot.name !== guild.name) editGuildOptions.name = shot.name
         if (shot.description !== guild.description) editGuildOptions.description = shot.description
-        if (shot.icon !== guild.icon) editGuildOptions.icon = shot.icon
-        if (shot.banner !== guild.banner) editGuildOptions.banner = shot.banner
+        if (shot.icon !== guild.iconURL()) editGuildOptions.icon = shot.icon
+        if (shot.banner !== guild.bannerURL()) editGuildOptions.banner = shot.banner
 
         // will be ignored if the object empty
         for (const _ in editGuildOptions) {
@@ -148,6 +144,6 @@ export class Snapshot {
 
         await Promise.allSettled(promises)
 
-        guild.snapshot = await Snapshot.take(guild)
+        guild.snapshot = new Snapshot(guild)
     }
 }
