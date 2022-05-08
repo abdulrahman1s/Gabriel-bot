@@ -67,7 +67,7 @@ Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targe
 
         const action = new Action(entry)
 
-        if (!this.actions.add(action).scan(action)) return false
+        if (!this.actions.scan(action)) return false
         // Keep in mind. Global Checking will not forgive this
         if (!this.client.isPunishable(action.executorId)) return false
 
@@ -91,7 +91,7 @@ Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targe
     const global = async () => {
         if (this.running.has('GLOBAL')) return
 
-        const result = this.actions.scan(entry.actionType)
+        const result = this.actions.globalScan(entry.actionType)
 
         if (!result.redAlert) return
 
@@ -101,7 +101,7 @@ Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targe
 
         const promises: Promise<unknown>[] = []
 
-        for (const a of result.actions) promises.push(this.bans.create(a.executorId))
+        for (const a of result.actions.values()) promises.push(this.bans.create(a.executorId))
 
         for (const channel of this.channels.cache.values()) {
             if (channel.isThread()) continue
@@ -157,9 +157,7 @@ Object.defineProperties(Guild.prototype, {
         value: new Set()
     },
     actions: {
-        get() {
-            return ActionManager.get(this.id)
-        }
+        value: new ActionManager()
     },
     owner: {
         get() {
