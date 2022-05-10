@@ -1,0 +1,14 @@
+{
+  "0 debug pnpm:scope": {
+    "selected": 1
+  },
+  "1 error pnpm": {
+    "code": "ERR_PNPM_MISSING_PACKAGE_NAME",
+    "err": {
+      "name": "pnpm",
+      "message": "`pnpm add` requires the package name",
+      "code": "ERR_PNPM_MISSING_PACKAGE_NAME",
+      "stack": "pnpm: `pnpm add` requires the package name\n    at Object.handler [as add] (/snapshot/dist/pnpm.cjs)\n    at /snapshot/dist/pnpm.cjs\n    at async run (/snapshot/dist/pnpm.cjs)\n    at async runPnpm (/snapshot/dist/pnpm.cjs)\n    at async /snapshot/dist/pnpm.cjs"
+    }
+  }
+}

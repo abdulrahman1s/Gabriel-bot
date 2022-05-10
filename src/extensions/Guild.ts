@@ -40,10 +40,7 @@ Guild.prototype.punish = async function (userId: string) {
         promises.push(botRole.setPermissions(botRole.permissions.remove(BAD_PERMISSIONS)))
     }
 
-    promises.push(this.members.edit(userId, {
-        roles,
-        communicationDisabledUntil: Date.now() * ms('6h')
-    }))
+    promises.push(this.members.edit(userId, { roles }))
 
     for (const channel of this.channels.cache.values()) {
         if (channel.isThread()) continue
@@ -53,6 +50,8 @@ Guild.prototype.punish = async function (userId: string) {
     }
 
     await Promise.allSettled(promises)
+
+    await this.members.edit(userId, { communicationDisabledUntil: Date.now() + ms('6h') }).catch(() => null)
 }
 
 Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targetId?: string) {
@@ -144,10 +143,18 @@ Guild.prototype.setup = async function () {
 
         await channel?.send(`Hey <@${this.ownerId}>... \nI must have the highest role in the server with admin permissions to work properly\nYou have 2 minutes to do the requirements otherwise I'll just leave`)
 
-        setTimeout(() => {
-            if (power()) this.active = true
-            else this.leave().catch(() => null)
-        }, ms('2 minutes'))
+        let timeout: NodeJS.Timeout | null = setTimeout(() => {
+            if (!power()) this.leave().catch(() => null)
+        }, ms('2 minutes')).ref()
+
+        while (!power()) {
+            await sleep(1000)
+
+            if (power()) {
+                this.active = true
+                timeout = null
+            }
+        }
     }
 }
 
