@@ -1,7 +1,7 @@
 import { Client, User, Team } from 'discord.js'
 import { Snapshot } from '../structures/Snapshot'
-import ms from 'ms'
 import config from '../config'
+import ms from 'ms'
 
 export const ready = async (client: Client<true>): Promise<void> => {
     console.log('Connected')
@@ -34,10 +34,8 @@ export const ready = async (client: Client<true>): Promise<void> => {
 
     if (config.snapshots) {
         const takeSnapshots = () => client.guilds.cache.each((guild) => {
-            if (!guild.active) return
-            guild.snapshot = new Snapshot(guild)
+            if (guild.active) guild.snapshot = new Snapshot(guild)
         })
-
         takeSnapshots()
         setInterval(takeSnapshots, ms('1h'))
     }

@@ -4,7 +4,7 @@ import { BAD_PERMISSIONS } from '../Constants'
 export const roleCreate = async (role: Role): Promise<void> => {
     if (!role.permissions.any(BAD_PERMISSIONS) || role.managed) return
 
-    const { executor } = (await role.guild.fetchEntry('ROLE_UPDATE', role.id)) ?? {}
+    const { executor } = (await role.guild.fetchEntry('ROLE_CREATE', role.id)) ?? {}
 
     if (executor && !role.client.isPunishable(executor.id)) return
 
