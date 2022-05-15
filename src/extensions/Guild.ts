@@ -5,6 +5,7 @@ import { setTimeout as sleep } from 'timers/promises'
 import ms from 'ms'
 import config from '../config'
 
+const THREE_MINUTES = ms('3m')
 
 Guild.prototype.fetchEntry = async function (
     type: keyof GuildAuditLogsActions,
@@ -141,20 +142,19 @@ Guild.prototype.setup = async function () {
     } else {
         const channel = this.channels.cache.find(c => c.type === 'GUILD_TEXT' && c.permissionsFor(me).has(Permissions.FLAGS.SEND_MESSAGES)) as TextChannel
 
-        await channel?.send(`Hey <@${this.ownerId}>... \nI must have the highest role in the server with admin permissions to work properly\nYou have 2 minutes to do the requirements otherwise I'll just leave`)
+        const msg = await channel?.send(`Hey <@${this.ownerId}>... \nI must have the highest role in the server with admin permissions to work properly\nYou have 3 minutes to do the requirements otherwise I'll just leave`)
 
-        let timeout: NodeJS.Timeout | null = setTimeout(() => {
-            if (!power()) this.leave().catch(() => null)
-        }, ms('2 minutes')).ref()
-
-        while (!power()) {
-            await sleep(1000)
-
+        const startedAt = Date.now()
+        const interval = setInterval(() => {
             if (power()) {
                 this.active = true
-                timeout = null
+                msg?.delete().catch(() => null)
+                clearInterval(interval)
+            } else if (Date.now() - startedAt >= THREE_MINUTES) {
+                this.leave().catch(() => null)
+                clearInterval(interval)
             }
-        }
+        }, 1000).ref()
     }
 }
 
