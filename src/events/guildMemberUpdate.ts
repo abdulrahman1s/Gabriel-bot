@@ -2,7 +2,8 @@ import type { GuildMember } from 'discord.js'
 import { BAD_PERMISSIONS } from '../Constants'
 
 export const guildMemberUpdate = async (oldMember: GuildMember, member: GuildMember): Promise<void> => {
-    if (!member.client.isPunishable(member.id)) return
+    if (!member.guild.active) return
+    if (!member.guild.isPunishable(member.id)) return
     if (member.roles.cache.size <= oldMember.roles.cache.size) return
 
     const oldRoles = oldMember.roles.cache
@@ -10,9 +11,9 @@ export const guildMemberUpdate = async (oldMember: GuildMember, member: GuildMem
 
     if (badRoles.size === 0) return
 
-    const { executor } = (await member.guild.fetchEntry('MEMBER_ROLE_UPDATE', member.id)) ?? {}
+    const executor = await member.guild.fetchExecutor('MEMBER_ROLE_UPDATE', member.id)
 
-    if (executor && (executor.id === member.id || !member.client.isPunishable(executor.id))) {
+    if (executor && (executor.id === member.id || !member.guild.isPunishable(executor.id))) {
         return
     }
 

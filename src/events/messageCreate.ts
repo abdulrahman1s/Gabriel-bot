@@ -1,7 +1,6 @@
 import { Message, LimitedCollection, GuildTextBasedChannel } from 'discord.js'
 import { BAD_PERMISSIONS } from '../Constants'
 import { setTimeout as sleep } from 'timers/promises'
-import config from '../config'
 
 const spam = new LimitedCollection<string, number[]>({ maxSize: 100 })
 const TIMEOUT_BEFORE_DELETE = 1000
@@ -19,8 +18,9 @@ const handleSpam = async (msg: Message<true>) => {
 
     timestamps.push(msg.createdTimestamp)
 
+    const { max, time } = msg.guild.settings.limits.messages.user
     const now = Date.now()
-    const isSpamming = timestamps.filter((stamp) => now - stamp <= config.limits.messages.user.time).length >= config.limits.messages.user.max
+    const isSpamming = timestamps.filter((stamp) => now - stamp <= time).length >= max
 
     if (!isSpamming) return
 
@@ -48,8 +48,10 @@ const handleWebhookSpam = async (msg: Message<true>) => {
 
     timestamps.push(msg.createdTimestamp)
 
+    const { max, time } = msg.guild.settings.limits.messages.hook
+
     const now = Date.now()
-    const isSpamming = timestamps.filter((stamp) => now - stamp <= config.limits.messages.hook.time).length >= config.limits.messages.hook.max
+    const isSpamming = timestamps.filter((stamp) => now - stamp <= time).length >= max
 
     if (!isSpamming && !msg.mentions.everyone) return
 
@@ -72,8 +74,9 @@ const handleWebhookSpam = async (msg: Message<true>) => {
 
 export const messageCreate = async (message: Message): Promise<void> => {
     if (!message.inGuild()) return
+    if (!message.guild.active) return
     if (message.guild.running.has(message.webhookId || message.author.id)) return
     if (message.webhookId) return handleWebhookSpam(message)
     const member = message.member || await message.guild.members.fetch(message.author.id)
-    if (message.client.isPunishable(message.author.id) && member.permissions.any(BAD_PERMISSIONS)) return handleSpam(message)
+    if (message.guild.isPunishable(message.author.id) && member.permissions.any(BAD_PERMISSIONS)) return handleSpam(message)
 }

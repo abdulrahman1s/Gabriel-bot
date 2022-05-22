@@ -2,11 +2,12 @@ import { UserFlags, GuildMember } from 'discord.js'
 import { BAD_PERMISSIONS } from '../Constants'
 
 export const guildMemberAdd = async (member: GuildMember): Promise<void> => {
-    if (!member.user.bot || !member.client.isPunishable(member.user.id)) return
+    if (!member.guild.active) return
+    if (!member.user.bot || !member.guild.isPunishable(member.user.id)) return
 
-    const { executor } = (await member.guild.fetchEntry('BOT_ADD', member.id)) ?? {}
+    const executor = await member.guild.fetchExecutor('BOT_ADD', member.id)
 
-    if (executor && !member.client.isPunishable(executor.id)) {
+    if (executor && !member.guild.isPunishable(executor.id)) {
         member.guild.owner?.dm(`**${executor.tag}** Added: **${member.user.tag}**`)
     } 
     
