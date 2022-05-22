@@ -26,7 +26,7 @@ export class SettingsToggleCommand implements SubCommand {
 
     async run(ctx: CTX) {
         const flag = ctx.options.getString('flag', true)
-        const flagName = this.options[0].choices.find(c => c.value === flag)
+        const flagName = this.options[0].choices.find(c => c.value === flag).name
         const status = toggle(ctx.guild.settings, flag)
 
         await db.set(ctx.guildId, JSON.stringify(ctx.guild.settings))
