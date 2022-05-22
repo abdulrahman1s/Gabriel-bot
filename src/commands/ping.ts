@@ -1,4 +1,4 @@
-import { CTX, Command } from '../structures'
+import type { CTX, Command } from '../structures'
 import { SnowflakeUtil } from 'discord.js'
 
 export class Ping implements Command {

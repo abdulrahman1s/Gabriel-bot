@@ -1,20 +1,20 @@
 {
-  "name": "anti-raid",
-  "description": "Protection Discord Bot",
+  "name": "gabriel-bot",
+  "description": "The Best Protection Discord Bot Ever",
   "version": "1.0.0",
   "license": "MIT",
   "private": true,
-  "main": "dist/src/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node --experimental-specifier-resolution=node dist/src/index",
+    "start": "node --experimental-specifier-resolution=node dist/index.js",
     "start:quick": "npm run build && npm run start"
   },
   "type": "module",
   "dependencies": {
     "discord.js": "^13.7.0",
     "dotenv": "^16.0.0",
-    "env-var": "^7.1.1",
+    "ioredis": "^5.0.5",
     "ms": "^3.0.0-beta.2"
   },
   "devDependencies": {

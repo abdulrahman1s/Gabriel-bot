@@ -41,7 +41,7 @@ export class Snapshot {
         this.name = guild.name
         this.description = guild.description
         this.banner = guild.bannerURL()
-        this.icon = guild.iconURL()
+        this.icon = guild.iconURL({ dynamic: true })
 
         for (const [id, c] of guild.channels.cache) {
             if (c.isThread()) continue
@@ -100,7 +100,7 @@ export class Snapshot {
 
         if (shot.name !== guild.name) editGuildOptions.name = shot.name
         if (shot.description !== guild.description) editGuildOptions.description = shot.description
-        if (shot.icon !== guild.iconURL()) editGuildOptions.icon = shot.icon
+        if (shot.icon !== guild.iconURL({ dynamic: true })) editGuildOptions.icon = shot.icon
         if (shot.banner !== guild.bannerURL()) editGuildOptions.banner = shot.banner
 
         // will be ignored if the object empty
@@ -111,18 +111,17 @@ export class Snapshot {
 
         const addedChannels = guild.channels.cache.filter((c) => !shot.channels.has(c.id))
         const removedChannels = shot.channels.filter((_, id) => !guild.channels.cache.has(id))
-
         const removedCategories = removedChannels.filter(c => c.type === 'GUILD_CATEGORY')
         const otherRemovedChannels = removedChannels.filter((c, id) => {
             return c.type !== 'GUILD_CATEGORY' && !removedCategories.some(cat => cat.children.has(id))
         })
 
         for (const c of addedChannels.values()) promises.push(c.delete())
-        for (const c of removedCategories.values()) promises.push(guild.channels.create(c.name, c).then(cat => {
+        for (const c of removedCategories.values()) promises.push(guild.channels.create(c.name, c).then(parent => {
             const nestedPromises: Promise<unknown>[] = []
 
             for (const child of c.children.values()) {
-                nestedPromises.push(guild.channels.create(child.name, { ...child, parent: cat.id }))
+                nestedPromises.push(guild.channels.create(child.name, { ...child, parent: parent.id }))
             }
 
             return Promise.all(nestedPromises)
