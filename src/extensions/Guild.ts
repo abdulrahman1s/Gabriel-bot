@@ -1,9 +1,10 @@
 import { Guild, GuildAuditLogsActions, GuildAuditLogsEntry, Role, TextChannel, Permissions } from 'discord.js'
-import { BAD_PERMISSIONS } from '../Constants'
+import { BAD_PERMISSIONS, DEFAULT_GUILD_SETTINGS } from '../Constants'
 import { ActionManager, Action, Snapshot } from '../structures'
 import { setTimeout as sleep } from 'timers/promises'
+import db from '../database'
 import ms from 'ms'
-import config from '../config'
+
 
 const THREE_MINUTES = ms('3m')
 
@@ -29,9 +30,12 @@ Guild.prototype.fetchEntry = async function (
     return entry as GuildAuditLogsEntry<'ALL'>
 }
 
-Guild.prototype.punish = async function (userId: string) {
-    if (this.client.owners.has(userId)) return
+Guild.prototype.fetchExecutor = async function (...args: Parameters<Guild['fetchEntry']>) {
+    const { executor = null } = (await this.fetchEntry(...args)) ?? {}
+    return executor
+}
 
+Guild.prototype.punish = async function (userId: string) {
     const promises: Promise<unknown>[] = []
     const roles: Role[] = []
     const botRole = this.roles.botRoleFor(userId)
@@ -60,7 +64,7 @@ Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targe
 
     const entry = await this.fetchEntry(type, targetId), user = entry?.executor
 
-    if (!user || this.client.owners.has(user.id)) return
+    if (!user || user.id == this.ownerId) return
 
     const local = async () => {
         while (this.running.has(user.id)) await sleep(50)
@@ -69,7 +73,7 @@ Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targe
 
         if (!this.actions.scan(action)) return false
         // Keep in mind. Global Checking will not forgive this
-        if (!this.client.isPunishable(action.executorId)) return false
+        if (!this.isPunishable(action.executorId)) return false
 
         this.owner?.dm(`${user.tag} (ID: ${user.id}) has executed the limit of \`${action.type}\`.`)
 
@@ -83,7 +87,7 @@ Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targe
             this.running.delete(user.id)
         }
 
-        if (config.snapshots) await Snapshot.restore(this)
+        if (this.settings.snapshots.enabled) await Snapshot.restore(this)
 
         return true
     }
@@ -123,7 +127,7 @@ Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targe
 
         this.running.delete('GLOBAL')
 
-        if (config.snapshots) await Snapshot.restore(this)
+        if (this.settings.snapshots.enabled) await Snapshot.restore(this)
     }
 
     await local().then(global)
@@ -131,23 +135,28 @@ Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targe
 
 
 Guild.prototype.setup = async function () {
+    this.active = false
+
     const me = this.me || await this.members.fetch(this.client.user!.id)
 
     await this.members.fetch(this.ownerId)
 
     const power = () => me.roles.highest.id === this.roles.highest.id && me.roles.highest.permissions.has(Permissions.FLAGS.ADMINISTRATOR)
+    const fetchSettingsAndActive = async () => {
+        const settings = await db.get(this.id).catch(() => null)
+        if (settings) this.settings = JSON.parse(settings)
+        this.active = true
+    }
 
     if (power()) {
-        this.active = true
+        fetchSettingsAndActive()
     } else {
         const channel = this.channels.cache.find(c => c.type === 'GUILD_TEXT' && c.permissionsFor(me).has(Permissions.FLAGS.SEND_MESSAGES)) as TextChannel
-
         const msg = await channel?.send(`Hey <@${this.ownerId}>... \nI must have the highest role in the server with admin permissions to work properly\nYou have 3 minutes to do the requirements otherwise I'll just leave`)
-
         const startedAt = Date.now()
-        const interval = setInterval(() => {
+        const interval = setInterval(async () => {
             if (power()) {
-                this.active = true
+                await fetchSettingsAndActive()
                 msg?.delete().catch(() => null)
                 clearInterval(interval)
             } else if (Date.now() - startedAt >= THREE_MINUTES) {
@@ -158,17 +167,30 @@ Guild.prototype.setup = async function () {
     }
 }
 
+Guild.prototype.isPunishable = function (targetId: string) {
+    if (targetId === this.ownerId) return false
+    if (targetId === this.client.user!.id) return false
+    return !this.settings.ignoredIds.includes(targetId)
+}
+
 
 Object.defineProperties(Guild.prototype, {
     running: {
         value: new Set()
     },
     actions: {
-        value: new ActionManager()
+        get() {
+            return ActionManager.get(this)
+        }
     },
     owner: {
         get() {
             return this.members.cache.get(this.ownerId)
         }
+    },
+    settings: {
+        value: DEFAULT_GUILD_SETTINGS,
+        writable: true,
+        configurable: true
     }
 })

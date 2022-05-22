@@ -1,8 +1,7 @@
 import { GuildMember } from 'discord.js'
-import config from '../config'
 
 GuildMember.prototype.dm = async function (content: string, times = 1) {
-    if (!config.directAlerts) return false
+    if (!this.guild.settings.privateAlerts) return false
 
     let i = 0
 
