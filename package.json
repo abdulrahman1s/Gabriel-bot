@@ -4,10 +4,10 @@
   "version": "1.0.0",
   "license": "MIT",
   "private": true,
-  "main": "dist/src/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node --experimental-specifier-resolution=node dist/src/index",
+    "start": "node --experimental-specifier-resolution=node dist/index.js",
     "start:quick": "npm run build && npm run start"
   },
   "type": "module",
