@@ -10,4 +10,8 @@ export interface SubCommand extends ApplicationCommandSubCommandData {
     run(ctx: CommandInteraction): Awaited<void | unknown>
 }
 
+export class CommandError {
+    constructor(public message: string) {}
+}
+
 export type CTX = CommandInteraction<'cached'>

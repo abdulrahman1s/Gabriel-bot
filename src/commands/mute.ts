@@ -1,4 +1,4 @@
-import type { CTX, Command } from '../structures'
+import { CTX, Command, CommandError } from '../structures'
 import ms, { StringValue } from 'ms'
 
 export class MuteCommand implements Command {
@@ -21,16 +21,15 @@ export class MuteCommand implements Command {
         required: false
     }]
     permissions = ['MUTE_MEMBERS'] as const
-    
+
     async run(ctx: CTX) {
         const member = ctx.options.getMember('user', true)
         const reason = ctx.options.getString('reason') || 'No reason'
         const duration = Date.now() + ms((ctx.options.getString('duration') || '30 minute') as StringValue)
 
-        if (isNaN(duration)) return ctx.reply({
-            content: 'Invalid duration input',
-            ephemeral: true
-        })
+        if (member.id === ctx.client.user.id) throw new CommandError('You can\'t mute me')
+        if (member.id === ctx.user.id) throw new CommandError('You can\'t mute yourself')
+        if (isNaN(duration)) throw new CommandError('Invalid duration input')
 
         await member.disableCommunicationUntil(duration, reason)
 

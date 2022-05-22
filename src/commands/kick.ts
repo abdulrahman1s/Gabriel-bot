@@ -1,4 +1,4 @@
-import type { CTX, Command } from '../structures'
+import { CTX, Command, CommandError } from '../structures'
 
 export class KickCommand implements Command {
     name = 'kick'
@@ -18,6 +18,9 @@ export class KickCommand implements Command {
     async run(ctx: CTX) {
         const member = ctx.options.getMember('user', true)
         const reason = ctx.options.getString('reason') || 'No reason'
+
+        if (member.id === ctx.user.id) throw new CommandError('You can\'t kick yourself')
+        if (member.id === ctx.client.user.id) throw new CommandError('You can\'t kick me')
         
         await member.kick(reason)
 

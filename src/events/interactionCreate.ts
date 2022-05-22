@@ -1,4 +1,7 @@
-import type { Interaction } from 'discord.js'
+import { Interaction, DiscordAPIError } from 'discord.js'
+import { CommandError } from '../structures'
+
+const ERROR_EMOJI = '⚠️ '
 
 export const interactionCreate = async (ctx: Interaction) => {
     if (!ctx.isCommand() || !ctx.inGuild()) return
@@ -16,8 +19,17 @@ export const interactionCreate = async (ctx: Interaction) => {
     try {
         await command.run(ctx)
     } catch (err) {
-        console.error(err)
-        const say = (content: string) => (ctx.replied || ctx.deferred) ? ctx.editReply(content) : ctx.reply({ content, ephemeral: true })
-        await say('An error has occurred')
+        const say = (content: string) => (ctx.replied || ctx.deferred) ?
+            ctx.editReply(ERROR_EMOJI + content) :
+            ctx.reply({ content: ERROR_EMOJI + content, ephemeral: true })
+
+        if (err instanceof CommandError) {
+            await say(err.message)
+        } else if (err instanceof DiscordAPIError && err.code === 50013) {
+            await say(`Sorry, I'm missing permissions to do that`)
+        } else {
+            console.error(err)
+            await say('An error has occurred')
+        }
     }
 }
