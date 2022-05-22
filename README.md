@@ -1,66 +1,45 @@
-## The Best Protection Bot
+## Gabriel Bot (The Best Protection Bot)
 The ultimate all-in-one protection discord bot you'll ever need, really
 
-#### Description
+#### 📖 Description
 I had a bad friend.. he tried to raid my server
 But he failed cuz of this bot. **you need this!**
 
 
 ### ✨ Features
-- Always offline status on
-- Smart Spam Detector (works only with webhook and admins)
-- Server Snapshots (Fix the broken things made by the hacker, something like Going back in time 🪄)
-- Things that cannot gain bad permissions while the bot running
-  - `@everyone` role
-  - any role
-  - channel overwrites 
-- **All Messages** cannot be enabled while the bot running
-- The best punishment system (what if someone has executed the limit of x?)
-  - Reset his roles
-  - Mute him for 6 hours
-  - Cleanup all channels he has permission/overwrite in
-- Only owners can add bots. (Verified bots can pass by anyone but it's permissions will be reset)
-- Red Alert Mode (fire up in case the server being under attack by multiple hackers, what this could do?)
-  - Reset All Roles Permissions
-  - Reset All Channel Overwrites
-  - Ban the suspected users
-  - Set server verification level to **Highest**
-- Detect bad server name changes (will revert it to the old name)
-  - Supported languages
-    - Arabic
-    - English
+- Moderation Commands
+- Snapshots (Fix the broken things made by the hacker, something like Going back in time 🪄)
+- Look up for bad changes in...
+  - Server Settings (name, notification mode)
+  - Role Permissions
+  - Channel Overwrites
+- Auto kick un-verified bots
+- An Excellent Punishment
+  - Mute the hacker for 6 hours
+  - Remove All roles from him
+  - Cleanup Channels he has overwrites in
+- Smart Spam Detector (This feature will work only with webhooks and admins)
+- Red Alert Mode (Runs when the server being under attack by multiple hackers at the same time)
+  - Sets Server verification level to **Highest**
+  - Bans all the suspected users
+  - Cleanup Server Roles (permissions)
+  - Cleanup Server Channels (overwrites)
 
-### 📌 Requirements
-- Discord bot token
-- Nodejs v16.9 or newer installed
-- Git installed (Optional)
+### 🤔 The name?
+**Gabriel** (**جبريل** romanized: *Jibrīl*) is is venerated as one of the primary archangels and as the Angel of Revelation in Islam. [More info...](https://en.wikipedia.org/wiki/Gabriel)
 
-### 🛠️ Setup
+### ☁ Self-hosted
+TODO
 
-1. Clone the repo (You could download the [zip](https://github.com/abdulrahman1s/Anti-raid/archive/refs/heads/master.zip) file and extract it instead)
-```bash
-$ git clone https://github.com/abdulrahman1s/Anti-raid.git
-$ cd Anti-raid
-```
-
-2. Install the required packages
-```bash
-$ npm install
-```
-
-3. Rename [`env.example`](env.example) to `.env` and edit it (All options inside the file)
-
-4. Build and run
-```bash
-$ npm run build && npm run start
-```
-
-5. Star the repo or buy me a [coffee.](https://ko-fi.com/abdulrahman1s)
-
+### 🙌 Contribute
+Good changes are always welcoming. 😁
+1. Fork the repo
+2. Made your changes
+3. Open a pull request
 
 ### ❔ FAQs
 - Why you made this?
-  - Already answered [above](#description)
+  - Already answered [above](#📖-description)
 - The bot remain in offline status
   - Normal, acutely it's a feature
 - The bot do nothing
@@ -70,11 +49,11 @@ $ npm run build && npm run start
 - The bot do nothing to spam messages
   - The Spammer must be an admin or webhook, otherwise will be ignored
 - I want the feature X
-  - Open an [issue.](https://github.com/abdulrahman1s/Anti-raid/issues) and describe what the feature X does
+  - Open an [issue.](https://github.com/abdulrahman1s/Gabriel-bot/issues) and describe what the feature X does
 - I need help
-  - Open an [issue.](https://github.com/abdulrahman1s/Anti-raid/issues)
+  - Open an [issue.](https://github.com/abdulrahman1s/Gabriel-bot/issues)
 
 
 
-#### License
+#### ✍ License
 Refer to the [LICENSE](LICENSE) file.
