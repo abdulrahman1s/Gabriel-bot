@@ -1,4 +1,6 @@
 import { Permissions } from 'discord.js'
+import { GuildSettings } from '../@types'
+import ms from 'ms'
 
 export const BAD_PERMISSIONS = [
     Permissions.FLAGS.ADMINISTRATOR,
@@ -14,4 +16,41 @@ export const BAD_PERMISSIONS = [
     Permissions.FLAGS.MUTE_MEMBERS
 ]
 
-export { default as BAD_WORDS } from '../assets/bad-words'
+export const BAD_PERMISSIONS_STRING = new Permissions(BAD_PERMISSIONS).toArray()
+
+
+export const DEFAULT_GUILD_SETTINGS: GuildSettings = {
+    privateAlerts: true,
+    ignoredIds: [],
+    limits: {
+        global: {
+            max: 15,
+            time: ms('1 minute')
+        },
+        create: {
+            max: 3,
+            time: ms('5 minutes')
+        },
+        update: {
+            max: 5,
+            time: ms('5 minutes')
+        },
+        delete: {
+            max: 3,
+            time: ms('3 minutes')
+        },
+        messages: {
+            hook: {
+                max: 3,
+                time: ms('5 seconds')
+            },
+            user: {
+                max: 30,
+                time: ms('30 seconds')
+            }
+        }
+    },
+    snapshots: {
+        enabled: false
+    }
+}
