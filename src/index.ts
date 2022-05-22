@@ -1,10 +1,9 @@
-import 'dotenv/config'
 import './extensions'
 import { createServer } from 'http'
 import { Client, Intents } from './structures'
 import config from './config'
 
-if (config.httpServer) createServer((_, res) => {
+createServer((_, res) => {
     res.end('Pong')
 }).listen(process.env.PORT ?? 8080)
 
@@ -13,7 +12,7 @@ const client = new Client({
     intents: [
         Intents.FLAGS.GUILDS,
         Intents.FLAGS.GUILD_MESSAGES,
-        Intents.FLAGS.GUILD_MEMBERS,
+        // Intents.FLAGS.GUILD_MEMBERS,
         Intents.FLAGS.GUILD_BANS,
         Intents.FLAGS.GUILD_WEBHOOKS
     ],
@@ -41,6 +40,7 @@ client
     .on('roleUpdate', (role) => role.guild.check('ROLE_UPDATE', role.id))
     .on('guildMemberRemove', (member) => member.guild.check('MEMBER_KICK', member.id))
     .on('webhookUpdate', (channel) => channel.guild.check('WEBHOOK_UPDATE'))
+
 
 void client.login(config.token)
 
