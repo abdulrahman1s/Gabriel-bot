@@ -175,6 +175,11 @@ Guild.prototype.isPunishable = function (targetId: string) {
 
 
 Object.defineProperties(Guild.prototype, {
+    active: {
+        value: false,
+        writable: true,
+        enumerable: true
+    },
     running: {
         value: new Set()
     },
@@ -191,6 +196,6 @@ Object.defineProperties(Guild.prototype, {
     settings: {
         value: DEFAULT_GUILD_SETTINGS,
         writable: true,
-        configurable: true
+        enumerable: true
     }
 })
