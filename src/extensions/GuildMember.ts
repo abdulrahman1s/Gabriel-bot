@@ -9,12 +9,10 @@ GuildMember.prototype.dm = async function (content: string, times = 1) {
 
     if (!channel) return false
 
-    while (i++ < times) {
-        try {
-            await channel.send(content)
-        } catch {
-            return false
-        }
+    while (i++ < times) try {
+        await channel.send(content)
+    } catch {
+        return false
     }
 
     return true
