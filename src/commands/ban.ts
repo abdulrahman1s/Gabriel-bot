@@ -1,4 +1,4 @@
-import type { CTX, Command } from '../structures'
+import { CTX, Command, CommandError } from '../structures'
 
 export class BanCommand implements Command {
     name = 'ban'
@@ -18,6 +18,9 @@ export class BanCommand implements Command {
     async run(ctx: CTX) {
         const user = ctx.options.getUser('user', true)
         const reason = ctx.options.getString('reason') || 'No reason'
+
+        if (user.id === ctx.user.id) throw new CommandError('You can\'t ban yourself')
+        if (user.id === ctx.client.user.id) throw new CommandError('You can\'t ban me')
 
         await ctx.guild.members.ban(user, { reason })
 

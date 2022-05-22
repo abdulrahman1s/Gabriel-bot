@@ -1,4 +1,4 @@
-import type { CTX, SubCommand } from '../../structures'
+import { CommandError, CTX, SubCommand } from '../../structures'
 import { createChoices } from '../../utils'
 import ms, { StringValue } from 'ms'
 import db from '../../database'
@@ -31,16 +31,8 @@ export class SettingsSetCommand implements SubCommand {
         const max = ctx.options.getInteger('max', true)
         const time = ms(ctx.options.getString('time', true) as StringValue)
 
-        if (max > 30 || max <= 0) return ctx.reply({
-            content: 'Maximum tries must be lower than `30` and greater than `0`.',
-            ephemeral: true
-        })
-
-        if (isNaN(time)) return ctx.reply({
-            content: 'Invalid time input',
-            ephemeral: true
-        })
-
+        if (max > 30 || max <= 0) throw new CommandError('Maximum tries must be lower than `30` and greater than `0`.')
+        if (isNaN(time)) throw new CommandError('Invalid time input')
 
         ctx.guild.settings.limits[type] = { max, time }
 
