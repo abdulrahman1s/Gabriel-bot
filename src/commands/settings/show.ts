@@ -9,16 +9,16 @@ export class SettingsShowCommand implements SubCommand {
     description = 'Show current settings'
     run(ctx: CTX) {
         const { privateAlerts, limits, ignoredIds } = ctx.guild.settings
-        const embed = new MessageEmbed().setTitle('Guild Settings').setColor('BLURPLE')
+        const embed = new MessageEmbed().setTitle('Server Settings').setColor('#2f3136')
 
-        embed.addField('Private Alerts:', privateAlerts ? '**Enabled**' : '**Disabled**')
         embed.addField('Limits:', [
             `Create **${limits.create.max}** / **${ms(limits.create.time)}**`,
             `Update **${limits.delete.max}** / **${ms(limits.delete.time)}**`,
             `Delete **${limits.update.max}** / **${ms(limits.update.time)}**`
-        ].join('\n'))
+        ].join('\n'), true)
+        embed.addField('Private Alerts:', privateAlerts ? '**Enabled**' : '**Disabled**', true)
         embed.addField('Trusted Users:', ignoredIds.map(id => `<@${id}>`).join(', ') || 'None')
 
-        return ctx.reply({ embeds: [embed], ephemeral: true })
+        return ctx.reply({ embeds: [embed] })
     }
 }

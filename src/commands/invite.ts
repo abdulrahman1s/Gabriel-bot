@@ -8,6 +8,6 @@ export class InviteCommand implements Command {
             scopes: ['bot', 'applications.commands'],
             permissions: ['ADMINISTRATOR']
         })
-        return ctx.reply(`[Invite me!](${link})`)
+        return ctx.reply(`[**Invite me!**](${link})`)
     }
 }
