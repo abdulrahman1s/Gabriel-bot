@@ -15,6 +15,8 @@ export class AboutCommand implements Command {
             .setThumbnail(ctx.client.user.displayAvatarURL())
             .setDescription('The ultimate all-in-one protection discord bot you\'ll ever need, really')
 
+        embed.addField('The name', `**Gabriel** (**جبريل**romanized: *Jibrīl*) is is venerated as one of the primary archangels and as the Angel of Revelation in Islam. [More info...](https://en.wikipedia.org/wiki/Gabriel)`)
+
         const inviteLink = ctx.client.generateInvite({
             scopes: ['bot', 'applications.commands'],
             permissions: ['ADMINISTRATOR']
