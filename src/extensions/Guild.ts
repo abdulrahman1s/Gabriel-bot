@@ -142,21 +142,22 @@ Guild.prototype.setup = async function () {
     await this.members.fetch(this.ownerId)
 
     const power = () => me.roles.highest.id === this.roles.highest.id && me.roles.highest.permissions.has(Permissions.FLAGS.ADMINISTRATOR)
-    const fetchSettingsAndActive = async () => {
+    const setup = async () => {
         const settings = await db.get(this.id).catch(() => null)
         if (settings) this.settings = JSON.parse(settings)
         this.active = true
+        this.snapshot = new Snapshot(this)
     }
 
     if (power()) {
-        fetchSettingsAndActive()
+        await setup()
     } else {
         const channel = this.channels.cache.find(c => c.type === 'GUILD_TEXT' && c.permissionsFor(me).has(Permissions.FLAGS.SEND_MESSAGES)) as TextChannel
         const msg = await channel?.send(`Hey <@${this.ownerId}>... \nI must have the highest role in the server with admin permissions to work properly\nYou have 3 minutes to do the requirements otherwise I'll just leave`)
         const startedAt = Date.now()
         const interval = setInterval(async () => {
             if (power()) {
-                await fetchSettingsAndActive()
+                await setup()
                 msg?.delete().catch(() => null)
                 clearInterval(interval)
             } else if (Date.now() - startedAt >= THREE_MINUTES) {

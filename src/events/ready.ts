@@ -16,12 +16,9 @@ export const ready = async (client: Client<true>): Promise<void> => {
 
     await Promise.all(promises)
 
-    const takeSnapshots = () => client.guilds.cache.each((guild) => {
+    setInterval(() => client.guilds.cache.each((guild) => {
         if (guild.active && guild.settings.snapshots.enabled) guild.snapshot = new Snapshot(guild)
-    })
-
-    takeSnapshots()
-    setInterval(takeSnapshots, ms('1 hour'))
+    }), ms('1 hour'))
 
     console.log('Everything fine...')
 }
