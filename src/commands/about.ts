@@ -24,7 +24,7 @@ export class AboutCommand implements Command {
 
         row.addComponents(
             button().setURL('https://ko-fi.com/abdulrahman1s').setLabel('Donation').setEmoji('❤️'),
-            button().setURL('https://github.com/abdulrahman1s/Anti-Raid').setLabel('Source Code').setEmoji('💻'),
+            button().setURL('https://github.com/abdulrahman1s/Gabriel-bot').setLabel('Source Code').setEmoji('💻'),
             button().setURL(inviteLink).setLabel('Invite').setEmoji('🔗')
         )
 
