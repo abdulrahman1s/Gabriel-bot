@@ -1,7 +1,5 @@
-![https://discord.com/api/oauth2/authorize?client_id=978012328958255164&permissions=8&scope=bot%20applications.commands](https://dcbadge.vercel.app/api/shield/978012328958255164?bot=true)
-
-## Gabriel Bot (The Best Protection Bot)
-The ultimate all-in-one protection discord bot you'll ever need, really
+<h1 align="center">Gabriel Bot (The Best Protection Bot)</h1>
+<h4 align="center">The ultimate all-in-one protection discord bot you'll ever need, really</h4>
 
 #### 📖 Description
 I had a bad friend.. he tried to raid my server
