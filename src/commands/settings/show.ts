@@ -13,8 +13,8 @@ export class SettingsShowCommand implements SubCommand {
 
         embed.addField('Limits:', [
             `Create **${limits.create.max}** / **${ms(limits.create.time)}**`,
-            `Update **${limits.delete.max}** / **${ms(limits.delete.time)}**`,
-            `Delete **${limits.update.max}** / **${ms(limits.update.time)}**`
+            `Update **${limits.update.max}** / **${ms(limits.update.time)}**`,
+            `Delete **${limits.delete.max}** / **${ms(limits.delete.time)}**`
         ].join('\n'), true)
         embed.addField('Private Alerts:', privateAlerts ? '**Enabled**' : '**Disabled**', true)
         embed.addField('Trusted Users:', ignoredIds.map(id => `<@${id}>`).join(', ') || 'None')
