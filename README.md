@@ -1,7 +1,7 @@
 <h1 align="center">Gabriel Bot (The Best Protection Bot)</h1>
 <h4 align="center">The ultimate all-in-one protection discord bot you'll ever need, really</h4>
 
-#### 📖 Description
+### 📖 Overview
 I had a bad friend.. he tried to raid my server
 But he failed cuz of this bot. [**you need this!**](https://discord.com/api/oauth2/authorize?client_id=978012328958255164&permissions=8&scope=bot%20applications.commands)
 
@@ -25,11 +25,13 @@ But he failed cuz of this bot. [**you need this!**](https://discord.com/api/oaut
   - Cleanup Server Roles (permissions)
   - Cleanup Server Channels (overwrites)
 
+
+### ☁ Self-hosted & Installation 
+I recommend you to use my instance since it's 99.9% uptime and free to use. [invite link](https://discord.com/api/oauth2/authorize?client_id=978012328958255164&permissions=8&scope=bot%20applications.commands) </br>
+Otherwise, More information can be found in our [wiki](https://github.com/abdulrahman1s/Gabriel-bot/wiki).
+
 ### 🤔 The name?
 **Gabriel** (**جبريل** romanized: *Jibrīl*) is is venerated as one of the primary archangels and as the Angel of Revelation in Islam. [More info...](https://en.wikipedia.org/wiki/Gabriel)
-
-### ☁ Self-hosted
-TODO
 
 ### 🙌 Contribute
 Good changes are always welcoming. 😁
@@ -40,8 +42,6 @@ Good changes are always welcoming. 😁
 ### ❔ FAQs
 - Why you made this?
   - Already answered [above](#📖-description)
-- The bot remain in offline status
-  - Normal, acutely it's a feature
 - The bot do nothing
   - Make sure to test it with your friend not you
   - Move the bot role to the highest position
