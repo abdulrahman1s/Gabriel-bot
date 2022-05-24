@@ -28,7 +28,7 @@ But he failed cuz of this bot. [**you need this!**](https://discord.com/api/oaut
 
 ### ☁ Self-hosted & Installation 
 I recommend you to use my instance since it's 99.9% uptime and free to use. [invite link](https://discord.com/api/oauth2/authorize?client_id=978012328958255164&permissions=8&scope=bot%20applications.commands) </br>
-Otherwise, More information can be found in our [wiki](https://github.com/abdulrahman1s/Gabriel-bot/wiki).
+Otherwise, More information can be found in our [wiki](https://github.com/abdulrahman1s/Gabriel-bot/wiki/Self-hosted).
 
 ### 🤔 The name?
 **Gabriel** (**جبريل** romanized: *Jibrīl*) is is venerated as one of the primary archangels and as the Angel of Revelation in Islam. [More info...](https://en.wikipedia.org/wiki/Gabriel)
@@ -40,20 +40,7 @@ Good changes are always welcoming. 😁
 3. Open a pull request
 
 ### ❔ FAQs
-- Why you made this?
-  - Already answered [above](#📖-description)
-- The bot do nothing
-  - Make sure to test it with your friend not you
-  - Move the bot role to the highest position
-  - Give the bot admin permission
-- The bot do nothing to spam messages
-  - The Spammer must be an admin or webhook, otherwise will be ignored
-- I want the feature X
-  - Open an [issue.](https://github.com/abdulrahman1s/Gabriel-bot/issues) and describe what the feature X does
-- I need help
-  - Open an [issue.](https://github.com/abdulrahman1s/Gabriel-bot/issues)
-
-
+[here](https://github.com/abdulrahman1s/Gabriel-bot/wiki/FAQs)
 
 #### ✍ License
 Refer to the [LICENSE](LICENSE) file.
