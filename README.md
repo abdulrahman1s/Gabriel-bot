@@ -2,8 +2,8 @@
 <h4 align="center">The ultimate all-in-one protection discord bot you'll ever need, really</h4>
 
 ### 📖 Overview
-I had a bad friend.. he tried to raid my server
-But he failed cuz of this bot. [**you need this!**](https://discord.com/api/oauth2/authorize?client_id=978012328958255164&permissions=8&scope=bot%20applications.commands)
+This bot will protect your server in any case. (I mean it) </br>
+That's mean? *No Spammers, No Raiders, No Joke*.
 
 
 ### ✨ Features
