@@ -137,7 +137,7 @@ Guild.prototype.check = async function (type: keyof GuildAuditLogsActions, targe
 Guild.prototype.setup = async function () {
     this.active = false
 
-    const me = this.me || await this.members.fetch(this.client.user!.id)
+    const me = this.members.me || await this.members.fetch(this.client.user!.id)
 
     await this.members.fetch(this.ownerId)
 
